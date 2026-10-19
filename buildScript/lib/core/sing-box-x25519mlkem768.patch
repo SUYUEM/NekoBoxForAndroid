@@ -1,0 +1,104 @@
+diff --git a/common/tls/reality_client.go b/common/tls/reality_client.go
+index d056966c..2229b0de 100644
+--- a/common/tls/reality_client.go
++++ b/common/tls/reality_client.go
+@@ -29,7 +29,6 @@ import (
+ 
+ 	"github.com/sagernet/sing-box/adapter"
+ 	"github.com/sagernet/sing-box/option"
+-	"github.com/sagernet/sing/common"
+ 	"github.com/sagernet/sing/common/debug"
+ 	E "github.com/sagernet/sing/common/exceptions"
+ 	"github.com/sagernet/sing/common/ntp"
+@@ -115,27 +114,15 @@ func (e *RealityClientConfig) ClientHandshake(ctx context.Context, conn net.Conn
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	for _, extension := range uConn.Extensions {
+-		if ce, ok := extension.(*utls.SupportedCurvesExtension); ok {
+-			ce.Curves = common.Filter(ce.Curves, func(curveID utls.CurveID) bool {
+-				return curveID != utls.X25519MLKEM768
+-			})
+-		}
+-		if ks, ok := extension.(*utls.KeyShareExtension); ok {
+-			ks.KeyShares = common.Filter(ks.KeyShares, func(share utls.KeyShare) bool {
+-				return share.Group != utls.X25519MLKEM768
+-			})
+-		}
+-	}
+-	err = uConn.BuildHandshakeState()
+-	if err != nil {
+-		return nil, err
+-	}
+ 
+ 	if len(uConfig.NextProtos) > 0 {
+ 		for _, extension := range uConn.Extensions {
+ 			if alpnExtension, isALPN := extension.(*utls.ALPNExtension); isALPN {
+ 				alpnExtension.AlpnProtocols = uConfig.NextProtos
++				err = uConn.BuildHandshakeState()
++				if err != nil {
++					return nil, err
++				}
+ 				break
+ 			}
+ 		}
+@@ -170,6 +157,9 @@ func (e *RealityClientConfig) ClientHandshake(ctx context.Context, conn net.Conn
+ 		return nil, E.New("nil KeyShareKeys")
+ 	}
+ 	ecdheKey := keyShareKeys.Ecdhe
++	if ecdheKey == nil {
++		ecdheKey = keyShareKeys.MlkemEcdhe
++	}
+ 	if ecdheKey == nil {
+ 		return nil, E.New("nil ecdheKey")
+ 	}
+diff --git a/common/tls/utls_client.go b/common/tls/utls_client.go
+index fceb15b8..41592a93 100644
+--- a/common/tls/utls_client.go
++++ b/common/tls/utls_client.go
+@@ -249,8 +249,8 @@ func init() {
+ }
+ 
+ func uTLSClientHelloID(name string) (utls.ClientHelloID, error) {
+-	switch name {
+-	case "chrome_psk", "chrome_psk_shuffle", "chrome_padding_psk_shuffle", "chrome_pq", "chrome_pq_psk":
++	switch strings.ToLower(name) {
++	case "chrome_psk", "chrome_psk_shuffle", "chrome_padding_psk_shuffle", "chrome_pq", "chrome_pq_psk", "x25519mlkem768", "x25519kyber768":
+ 		fallthrough
+ 	case "chrome", "":
+ 		return utls.HelloChrome_Auto, nil
+diff --git a/constant/version.go b/constant/version.go
+index c6d485a7..755ee4ae 100644
+--- a/constant/version.go
++++ b/constant/version.go
+@@ -1,3 +1,3 @@
+ package constant
+ 
+-var Version = "1.12.19-neko-1"
++var Version = "1.12.19-neko-2"
+diff --git a/go.mod b/go.mod
+index 92befc9a..c10e4a79 100644
+--- a/go.mod
++++ b/go.mod
+@@ -16,7 +16,7 @@ require (
+ 	github.com/libdns/cloudflare v0.2.2-0.20250708034226-c574dccb31a6
+ 	github.com/logrusorgru/aurora v2.0.3+incompatible
+ 	github.com/metacubex/tfo-go v0.0.0-20250921095601-b102db4216c0
+-	github.com/metacubex/utls v1.8.4
++	github.com/metacubex/utls v1.8.8
+ 	github.com/mholt/acmez/v3 v3.1.2
+ 	github.com/miekg/dns v1.1.67
+ 	github.com/oschwald/maxminddb-golang v1.13.1
+diff --git a/go.sum b/go.sum
+index 2cc4a010..ef74f453 100644
+--- a/go.sum
++++ b/go.sum
+@@ -125,6 +125,8 @@ github.com/metacubex/tfo-go v0.0.0-20250921095601-b102db4216c0 h1:Ui+/2s5Qz0lSnD
+ github.com/metacubex/tfo-go v0.0.0-20250921095601-b102db4216c0/go.mod h1:l9oLnLoEXyGZ5RVLsh7QCC5XsouTUyKk4F2nLm2DHLw=
+ github.com/metacubex/utls v1.8.4 h1:HmL9nUApDdWSkgUyodfwF6hSjtiwCGGdyhaSpEejKpg=
+ github.com/metacubex/utls v1.8.4/go.mod h1:kncGGVhFaoGn5M3pFe3SXhZCzsbCJayNOH4UEqTKTko=
++github.com/metacubex/utls v1.8.8 h1:7fiMYahL+tT1I/vG1MWidv88r/3A5NnPrurjzApZGyQ=
++github.com/metacubex/utls v1.8.8/go.mod h1:kncGGVhFaoGn5M3pFe3SXhZCzsbCJayNOH4UEqTKTko=
+ github.com/mholt/acmez/v3 v3.1.2 h1:auob8J/0FhmdClQicvJvuDavgd5ezwLBfKuYmynhYzc=
+ github.com/mholt/acmez/v3 v3.1.2/go.mod h1:L1wOU06KKvq7tswuMDwKdcHeKpFFgkppZy/y0DFxagQ=
+ github.com/miekg/dns v1.1.67 h1:kg0EHj0G4bfT5/oOys6HhZw4vmMlnoZ+gDu8tJ/AlI0=
