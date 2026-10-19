@@ -67,6 +67,10 @@
     <string name="profile_name">配置名称</string>
     <string name="server_address">服务器</string>
     <string name="server_port">服务器端口</string>
+    <string name="mieru_port_range">端口范围 (如 2012-2022)</string>
+    <string name="mieru_multiplexing">多路复用级别</string>
+    <string name="mieru_handshake_mode">0-RTT 握手模式</string>
+    <string name="mieru_traffic_pattern">混淆流量特征 (Base64)</string>
     <string name="username_opt">用户名 (可选)</string>
     <string name="password_opt">密码 (可选)</string>
     <string name="password">密码</string>

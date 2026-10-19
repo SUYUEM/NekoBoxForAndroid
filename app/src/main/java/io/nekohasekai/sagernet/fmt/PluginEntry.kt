@@ -21,7 +21,7 @@ enum class PluginEntry(
         DownloadSource(
             playStore = false,
             fdroid = false,
-            downloadLink = "https://github.com/MatsuriDayo/plugins/releases?q=mieru"
+            downloadLink = "https://github.com/xchacha20-poly1305/husi/releases?q=mieru"
         )
     ),
     NaiveProxy(

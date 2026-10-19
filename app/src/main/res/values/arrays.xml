@@ -337,6 +337,30 @@
         <item>UDP</item>
     </string-array>
 
+    <string-array name="mieru_multiplexing_entries">
+        <item>OFF (关闭)</item>
+        <item>LOW (低频 - 推荐)</item>
+        <item>MIDDLE (中频)</item>
+        <item>HIGH (高频)</item>
+    </string-array>
+
+    <string-array name="mieru_multiplexing_values">
+        <item>MULTIPLEXING_OFF</item>
+        <item>MULTIPLEXING_LOW</item>
+        <item>MULTIPLEXING_MIDDLE</item>
+        <item>MULTIPLEXING_HIGH</item>
+    </string-array>
+
+    <string-array name="mieru_handshake_mode_entries">
+        <item>STANDARD (标准 1-RTT)</item>
+        <item>NO_WAIT (极速 0-RTT)</item>
+    </string-array>
+
+    <string-array name="mieru_handshake_mode_values">
+        <item>HANDSHAKE_STANDARD</item>
+        <item>HANDSHAKE_NO_WAIT</item>
+    </string-array>
+
     <string-array name="naive_proto_entry">
         <item>HTTPS</item>
         <item>QUIC</item>

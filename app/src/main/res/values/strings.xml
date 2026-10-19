@@ -217,6 +217,10 @@
     <string name="action_trojan" translatable="false">Trojan</string>
     <string name="action_trojan_go" translatable="false">Trojan Go</string>
     <string name="action_mieru" translatable="false">Mieru</string>
+    <string name="mieru_port_range">Port Range (e.g. 2012-2022)</string>
+    <string name="mieru_multiplexing">Multiplexing Level</string>
+    <string name="mieru_handshake_mode">Handshake Mode (0-RTT)</string>
+    <string name="mieru_traffic_pattern">Traffic Pattern (Base64)</string>
     <string name="action_naive" translatable="false">Naïve</string>
     <string name="action_anytls" translatable="false">AnyTLS</string>
     <string name="action_hysteria" translatable="false">Hysteria</string>

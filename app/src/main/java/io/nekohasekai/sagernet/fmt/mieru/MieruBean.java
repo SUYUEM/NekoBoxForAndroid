@@ -34,6 +34,11 @@ public class MieruBean extends AbstractBean {
     public String username;
     public String password;
     public Integer mtu;
+    public String portRange;
+    public String multiplexing;
+    public String handshakeMode;
+    public String domainName;
+    public String trafficPattern;
 
     @Override
     public void initializeDefaultValues() {
@@ -42,18 +47,26 @@ public class MieruBean extends AbstractBean {
         if (username == null) username = "";
         if (password == null) password = "";
         if (mtu == null) mtu = 1400;
+        if (portRange == null) portRange = "";
+        if (multiplexing == null) multiplexing = "MULTIPLEXING_LOW";
+        if (handshakeMode == null) handshakeMode = "HANDSHAKE_STANDARD";
+        if (domainName == null) domainName = "";
+        if (trafficPattern == null) trafficPattern = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(0);
+        output.writeInt(1);
         super.serialize(output);
         output.writeString(protocol);
         output.writeString(username);
         output.writeString(password);
-        if (protocol.equals("UDP")) {
-            output.writeInt(mtu);
-        }
+        output.writeInt(mtu != null ? mtu : 1400);
+        output.writeString(portRange != null ? portRange : "");
+        output.writeString(multiplexing != null ? multiplexing : "MULTIPLEXING_LOW");
+        output.writeString(handshakeMode != null ? handshakeMode : "HANDSHAKE_STANDARD");
+        output.writeString(domainName != null ? domainName : "");
+        output.writeString(trafficPattern != null ? trafficPattern : "");
     }
 
     @Override
@@ -63,8 +76,24 @@ public class MieruBean extends AbstractBean {
         protocol = input.readString();
         username = input.readString();
         password = input.readString();
-        if (protocol.equals("UDP")) {
+        if (version == 0) {
+            if (protocol.equals("UDP")) {
+                mtu = input.readInt();
+            } else {
+                mtu = 1400;
+            }
+            portRange = "";
+            multiplexing = "MULTIPLEXING_LOW";
+            handshakeMode = "HANDSHAKE_STANDARD";
+            domainName = "";
+            trafficPattern = "";
+        } else {
             mtu = input.readInt();
+            portRange = input.readString();
+            multiplexing = input.readString();
+            handshakeMode = input.readString();
+            domainName = input.readString();
+            trafficPattern = input.readString();
         }
     }
 

@@ -38,9 +38,14 @@ class MieruSettingsActivity : ProfileSettingsActivity<MieruBean>() {
         DataStore.profileName = name
         DataStore.serverAddress = serverAddress
         DataStore.serverPort = serverPort
+        DataStore.serverPortRange = portRange ?: ""
         DataStore.serverProtocol = protocol
         DataStore.serverUsername = username
         DataStore.serverPassword = password
+        DataStore.mieruMultiplexing = multiplexing ?: "MULTIPLEXING_LOW"
+        DataStore.mieruHandshakeMode = handshakeMode ?: "HANDSHAKE_STANDARD"
+        DataStore.mieruDomainName = domainName ?: ""
+        DataStore.mieruTrafficPattern = trafficPattern ?: ""
         DataStore.serverMTU = mtu
     }
 
@@ -48,9 +53,14 @@ class MieruSettingsActivity : ProfileSettingsActivity<MieruBean>() {
         name = DataStore.profileName
         serverAddress = DataStore.serverAddress
         serverPort = DataStore.serverPort
+        portRange = DataStore.serverPortRange
         protocol = DataStore.serverProtocol
         username = DataStore.serverUsername
         password = DataStore.serverPassword
+        multiplexing = DataStore.mieruMultiplexing
+        handshakeMode = DataStore.mieruHandshakeMode
+        domainName = DataStore.mieruDomainName
+        trafficPattern = DataStore.mieruTrafficPattern
         mtu = DataStore.serverMTU
     }
 

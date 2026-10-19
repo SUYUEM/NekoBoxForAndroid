@@ -14,6 +14,7 @@ import io.nekohasekai.sagernet.fmt.trojan.parseTrojan
 import io.nekohasekai.sagernet.fmt.tuic.parseTuic
 import io.nekohasekai.sagernet.fmt.trojan_go.parseTrojanGo
 import io.nekohasekai.sagernet.fmt.v2ray.parseV2Ray
+import io.nekohasekai.sagernet.fmt.mieru.parseMieru
 import moe.matsuri.nb4a.proxy.anytls.parseAnytls
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.Util
@@ -214,6 +215,13 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
             Logs.d("Try parse anytls link: $this")
             runCatching {
                 entities.add(parseAnytls(this))
+            }.onFailure {
+                Logs.w(it)
+            }
+        } else if (startsWith("mieru://") || startsWith("mierus://")) {
+            Logs.d("Try parse mieru link: $this")
+            runCatching {
+                entities.add(parseMieru(this))
             }.onFailure {
                 Logs.w(it)
             }
