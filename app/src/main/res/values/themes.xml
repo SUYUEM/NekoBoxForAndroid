@@ -4,10 +4,16 @@
         <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
         <item name="actionModeCloseDrawable">@drawable/ic_navigation_close</item>
         <item name="colorButtonNormal">?colorAccent</item>
+        <item name="android:statusBarColor">?colorPrimaryDark</item>
         <item name="android:navigationBarColor">?colorPrimaryDark</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/theme_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorAccent">@color/theme_accent</item>
+        <item name="colorSecondary">@color/theme_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
 
         <item name="colorMaterial100">@color/theme_material_100</item>
         <item name="colorMaterial300">@color/theme_material_300</item>
@@ -55,7 +61,11 @@
         <item name="android:navigationBarColor">?colorPrimaryDark</item>
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/theme_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorAccent">@color/theme_accent</item>
+        <item name="colorSecondary">@color/theme_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
 
         <item name="colorMaterial100">@color/theme_material_100</item>
         <item name="colorMaterial300">@color/theme_material_300</item>
