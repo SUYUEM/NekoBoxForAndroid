@@ -9,6 +9,7 @@ import io.nekohasekai.sagernet.ktx.app
 
 object Theme {
 
+    const val MODERN_TECH = 0
     const val RED = 1
     const val PINK_SSR = 2
     const val PINK = 3
@@ -31,7 +32,7 @@ object Theme {
     const val BLUE_GREY = 20
     const val BLACK = 21
 
-    private fun defaultTheme() = PINK_SSR
+    private fun defaultTheme() = MODERN_TECH
 
     fun apply(context: Context) {
         context.setTheme(getTheme())
@@ -51,6 +52,7 @@ object Theme {
 
     fun getTheme(theme: Int): Int {
         return when (theme) {
+            MODERN_TECH -> R.style.Theme_SagerNet
             RED -> R.style.Theme_SagerNet_Red
             PINK -> R.style.Theme_SagerNet
             PINK_SSR -> R.style.Theme_SagerNet_Pink_SSR
@@ -78,6 +80,7 @@ object Theme {
 
     fun getDialogTheme(theme: Int): Int {
         return when (theme) {
+            MODERN_TECH -> R.style.Theme_SagerNet_Dialog
             RED -> R.style.Theme_SagerNet_Dialog_Red
             PINK -> R.style.Theme_SagerNet_Dialog
             PINK_SSR -> R.style.Theme_SagerNet_Dialog_Pink_SSR

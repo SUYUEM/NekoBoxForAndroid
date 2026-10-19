@@ -89,9 +89,8 @@ class ColorPickerPreference
             var i = 0
 
             for (color in colors) {
-                i++ //Theme.kt
-
                 val themeId = i
+                i++
                 val view = getNekoImageViewAtColor(color, 64, 0).apply {
                     setOnClickListener {
                         persistInt(themeId)
