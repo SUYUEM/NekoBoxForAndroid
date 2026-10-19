@@ -41,7 +41,7 @@ bash buildScript/init/action/gradle.sh
 
 # 5. Build APK
 echo ">> Step 4: Compiling arm64-v8a APK..."
-./gradlew app:assemblePreviewRelease
+./gradlew app:assembleOssRelease
 
 echo "=== Build Complete ==="
 find app/build/outputs/apk -name "*arm64-v8a*.apk"

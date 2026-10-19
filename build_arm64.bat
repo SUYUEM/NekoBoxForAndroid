@@ -30,7 +30,7 @@ if "%ANDROID_HOME%"=="" (
 echo [INFO] ANDROID_HOME=%ANDROID_HOME%
 
 echo >> Step 1: Compiling arm64-v8a APK with Gradle...
-call gradlew.bat app:assemblePreviewRelease
+call gradlew.bat app:assembleOssRelease
 
 echo.
 echo === Build Finished ===
