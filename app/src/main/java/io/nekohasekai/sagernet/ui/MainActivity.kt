@@ -45,6 +45,8 @@ import io.nekohasekai.sagernet.ktx.isPlay
 import io.nekohasekai.sagernet.ktx.launchCustomTab
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.parseProxies
+import io.nekohasekai.sagernet.ktx.parseSubscriptionUrl
+import io.nekohasekai.sagernet.ktx.SubscriptionInfo
 import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import moe.matsuri.nb4a.utils.Util
