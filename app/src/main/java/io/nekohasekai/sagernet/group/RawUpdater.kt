@@ -245,8 +245,9 @@ object RawUpdater : GroupUpdater() {
                 ))) {
                     // Note: YAML numbers parsed as "Long"
 
-                    when (proxy["type"] as String) {
-                        "socks5" -> {
+                    val pType = (proxy["type"]?.toString())?.lowercase()?.trim() ?: continue
+                    when (pType) {
+                        "socks", "socks5" -> {
                             proxies.add(SOCKSBean().apply {
                                 serverAddress = proxy["server"] as String
                                 serverPort = proxy["port"].toString().toInt()
@@ -256,7 +257,7 @@ object RawUpdater : GroupUpdater() {
                             })
                         }
 
-                        "http" -> {
+                        "http", "https" -> {
                             proxies.add(HttpBean().apply {
                                 serverAddress = proxy["server"] as String
                                 serverPort = proxy["port"].toString().toInt()
@@ -269,7 +270,7 @@ object RawUpdater : GroupUpdater() {
                             })
                         }
 
-                        "ss" -> {
+                        "ss", "shadowsocks" -> {
                             val ssPlugin = mutableListOf<String>()
                             if (proxy.contains("plugin")) {
                                 val opts = proxy["plugin-opts"] as Map<String, Any?>
@@ -305,7 +306,7 @@ object RawUpdater : GroupUpdater() {
                         }
 
                         "vmess", "vless", "trojan" -> {
-                            val bean = when (proxy["type"] as String) {
+                            val bean = when (pType) {
                                 "vmess" -> VMessBean()
                                 "vless" -> VMessBean().apply {
                                     alterId = -1 // make it VLESS
@@ -516,7 +517,7 @@ object RawUpdater : GroupUpdater() {
                             proxies.add(bean)
                         }
 
-                        "hysteria" -> {
+                        "hysteria", "hysteria1" -> {
                             val bean = HysteriaBean()
                             bean.protocolVersion = 1
                             var hopPorts = ""
@@ -569,7 +570,7 @@ object RawUpdater : GroupUpdater() {
                             proxies.add(bean)
                         }
 
-                        "hysteria2" -> {
+                        "hysteria2", "hy2" -> {
                             val bean = HysteriaBean()
                             bean.protocolVersion = 2
                             var hopPorts = ""
@@ -769,12 +770,17 @@ object RawUpdater : GroupUpdater() {
                     return json.getJSONArray("outbounds")
                         .filterIsInstance<JSONObject>()
                         .mapNotNull {
-                            val ty = it.getStr("type")
+                            val ty = (it.getStr("type") ?: it.getStr("protocol"))?.lowercase()?.trim()
                             if (ty == null || ty == "" ||
-                                ty == "dns" || ty == "block" || ty == "direct" || ty == "selector" || ty == "urltest"
+                                ty == "dns" || ty == "block" || ty == "blackhole" ||
+                                ty == "direct" || ty == "freedom" ||
+                                ty == "selector" || ty == "urltest"
                             ) {
                                 null
                             } else {
+                                if (!it.has("type") && it.has("protocol")) {
+                                    it.put("type", ty)
+                                }
                                 it
                             }
                         }.map {

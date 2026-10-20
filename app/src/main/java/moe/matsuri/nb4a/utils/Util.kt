@@ -63,18 +63,21 @@ object Util {
     fun b64Decode(b: String): ByteArray {
         var ret: ByteArray? = null
 
-        // padding 自动处理，不用理
-        // URLSafe 需要替换这两个，不要用 URL_SAFE 否则处理非 Safe 的时候会乱码
-        val str = b.replace("-", "+").replace("_", "/")
+        var clean = b.trim().removePrefix("\uFEFF").replace("\\s".toRegex(), "")
+        clean = clean.replace("-", "+").replace("_", "/")
+        val pad = clean.length % 4
+        if (pad == 2) clean += "=="
+        else if (pad == 3) clean += "="
 
         val flags = listOf(
-            Base64.DEFAULT, // 多行
-            Base64.NO_WRAP, // 单行
+            Base64.DEFAULT,
+            Base64.NO_WRAP,
+            Base64.URL_SAFE,
         )
 
         for (flag in flags) {
             try {
-                ret = Base64.decode(str, flag)
+                ret = Base64.decode(clean, flag)
             } catch (_: Exception) {
             }
             if (ret != null) return ret

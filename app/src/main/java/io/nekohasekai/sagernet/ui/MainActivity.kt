@@ -130,7 +130,26 @@ class MainActivity : ThemedActivity(),
         val uri = intent.data ?: return
 
         runOnDefaultDispatcher {
-            if (uri.scheme == "sn" && uri.host == "subscription" || uri.scheme == "clash") {
+            val raw = uri.toString()
+            val subInfo = parseSubscriptionUrl(raw)
+            val scheme = uri.scheme?.lowercase()
+            val isSubscription = subInfo != null ||
+                    (scheme == "sn" && uri.host == "subscription") ||
+                    scheme == "clash" ||
+                    scheme == "clashmeta" ||
+                    scheme == "mihomo" ||
+                    scheme == "meta" ||
+                    scheme == "sub" ||
+                    scheme == "shadowrocket" ||
+                    scheme == "sing-box" ||
+                    scheme == "v2rayng" ||
+                    scheme == "surge" ||
+                    scheme == "surge3" ||
+                    scheme == "stash" ||
+                    scheme == "loon" ||
+                    scheme == "quantumult-x" ||
+                    scheme == "quanx"
+            if (isSubscription) {
                 importSubscription(uri)
             } else {
                 importProfile(uri)
@@ -148,7 +167,37 @@ class MainActivity : ThemedActivity(),
     suspend fun importSubscription(uri: Uri) {
         val group: ProxyGroup
 
-        val url = uri.getQueryParameter("url")
+        val raw = uri.toString()
+        val subInfo = parseSubscriptionUrl(raw)
+
+        var url = subInfo?.url ?: uri.getQueryParameter("url")
+        var subName = subInfo?.name ?: uri.getQueryParameter("name")
+
+        if (url.isNullOrBlank()) {
+            val urlIndex = raw.indexOf("url=")
+            if (urlIndex != -1) {
+                val afterUrl = raw.substring(urlIndex + 4)
+                val nameIndex = afterUrl.indexOf("&name=")
+                val rawUrl = if (nameIndex != -1) {
+                    if (subName.isNullOrBlank()) {
+                        subName = runCatching { Uri.decode(afterUrl.substring(nameIndex + 6)) }.getOrNull()
+                    }
+                    afterUrl.substring(0, nameIndex)
+                } else {
+                    afterUrl
+                }
+                val decoded = runCatching { Uri.decode(rawUrl) }.getOrDefault(rawUrl)
+                if (decoded.startsWith("http://", ignoreCase = true) || decoded.startsWith("https://", ignoreCase = true)) {
+                    url = decoded
+                }
+            } else {
+                val ssp = uri.schemeSpecificPart.removePrefix("//")
+                if (ssp.startsWith("http://", ignoreCase = true) || ssp.startsWith("https://", ignoreCase = true)) {
+                    url = ssp
+                }
+            }
+        }
+
         if (!url.isNullOrBlank()) {
             group = ProxyGroup(type = GroupType.SUBSCRIPTION)
             val subscription = SubscriptionBean()
@@ -156,9 +205,15 @@ class MainActivity : ThemedActivity(),
 
             // cleartext format
             subscription.link = url
-            group.name = uri.getQueryParameter("name")
+            group.name = subName
         } else {
-            val data = uri.encodedQuery.takeIf { !it.isNullOrBlank() } ?: return
+            val data = uri.encodedQuery.takeIf { !it.isNullOrBlank() }
+            if (data == null) {
+                onMainDispatcher {
+                    alert(getString(R.string.action_import_err)).show()
+                }
+                return
+            }
             try {
                 group = KryoConverters.deserialize(
                     ProxyGroup().apply { export = true }, Util.zlibDecompress(Util.b64Decode(data))
@@ -175,7 +230,12 @@ class MainActivity : ThemedActivity(),
 
         val name = group.name.takeIf { !it.isNullOrBlank() } ?: group.subscription?.link
         ?: group.subscription?.token
-        if (name.isNullOrBlank()) return
+        if (name.isNullOrBlank()) {
+            onMainDispatcher {
+                alert(getString(R.string.action_import_err)).show()
+            }
+            return
+        }
 
         group.name = group.name.takeIf { !it.isNullOrBlank() }
             ?: ("Subscription #" + System.currentTimeMillis())

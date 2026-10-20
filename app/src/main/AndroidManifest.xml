@@ -110,9 +110,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="install-config"
-                    android:scheme="clash" />
+                <data android:scheme="clash" />
+                <data android:scheme="clashmeta" />
+                <data android:scheme="mihomo" />
+                <data android:scheme="meta" />
+                <data android:scheme="sub" />
+                <data android:scheme="shadowrocket" />
+                <data android:scheme="sing-box" />
+                <data android:scheme="v2rayng" />
+                <data android:scheme="surge" />
+                <data android:scheme="surge3" />
+                <data android:scheme="stash" />
+                <data android:scheme="loon" />
             </intent-filter>
 
             <intent-filter android:label="@string/profile_import">
@@ -129,11 +138,15 @@
                 <data android:scheme="socksa" />
                 <data android:scheme="sock5" />
                 <data android:scheme="vmess" />
+                <data android:scheme="vless" />
                 <data android:scheme="trojan" />
                 <data android:scheme="trojan-go" />
                 <data android:scheme="naive+https" />
                 <data android:scheme="naive+quic" />
                 <data android:scheme="hysteria" />
+                <data android:scheme="hysteria2" />
+                <data android:scheme="hy2" />
+                <data android:scheme="tuic" />
 
             </intent-filter>
 

@@ -56,7 +56,7 @@ class AppListActivity : ThemedActivity() {
         val packageName: String,
     ) {
         val name: CharSequence = appInfo.loadLabel(pm)    // cached for sorting
-        val icon: Drawable get() = appInfo.loadIcon(pm)
+        val icon: Drawable by lazy { appInfo.loadIcon(pm) }
         val uid get() = appInfo.uid
         val sys get() = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
     }
