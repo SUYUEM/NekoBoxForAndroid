@@ -19,3 +19,4 @@ jniLibs/
 # submodules
 /external
 /output_apk/
+/release_apk/
