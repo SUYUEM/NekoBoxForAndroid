@@ -13,7 +13,7 @@
             app:icon="@drawable/ic_baseline_color_lens_24"
             app:key="appTheme" />
         <moe.matsuri.nb4a.ui.SimpleMenuPreference
-            app:defaultValue="0"
+            app:defaultValue="2"
             app:entries="@array/night_mode"
             app:entryValues="@array/int_array_4"
             app:icon="@drawable/ic_baseline_wb_sunny_24"

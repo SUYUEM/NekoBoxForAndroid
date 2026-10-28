@@ -1,12 +1,13 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.SagerNet" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
         <item name="actionModeCloseDrawable">@drawable/ic_navigation_close</item>
         <item name="colorButtonNormal">?colorAccent</item>
-        <item name="android:statusBarColor">?colorPrimaryDark</item>
-        <item name="android:navigationBarColor">?colorPrimaryDark</item>
+        <item name="android:statusBarColor">?colorPrimary</item>
+        <item name="android:navigationBarColor">?android:attr/colorBackground</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o">true</item>
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>
         <item name="colorPrimaryVariant">@color/theme_primary_dark</item>
@@ -58,7 +59,8 @@
         <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
         <item name="actionModeCloseDrawable">@drawable/ic_navigation_close</item>
         <item name="colorButtonNormal">?colorAccent</item>
-        <item name="android:navigationBarColor">?colorPrimaryDark</item>
+        <item name="android:navigationBarColor">?android:attr/colorBackground</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o">true</item>
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>
         <item name="colorPrimaryVariant">@color/theme_primary_dark</item>
@@ -452,34 +454,34 @@
         <item name="colorPrimary">@color/color_ng_black_primary</item>
         <item name="colorPrimaryDark">@color/color_ng_black_primary</item>
         <item name="colorAccent">@color/color_ng_black_accent</item>
-        <item name="colorMaterial100">@color/color_ng_black_primary</item>
+        <item name="colorMaterial100">@color/material_teal_100</item>
         <item name="colorMaterial300">@color/color_ng_black_primary</item>
 
-        <item name="selectedColorPrimary">@color/color_ng_black_accent</item>
-        <item name="fabColorBackground">@color/color_ng_black_accent</item>
-        <item name="itemShapeFillColor">@color/color_ng_black_accent</item>
+        <item name="selectedColorPrimary">@color/color_ng_black_primary</item>
+        <item name="fabColorBackground">@color/color_ng_black_primary</item>
+        <item name="itemShapeFillColor">@color/material_teal_100</item>
 
-        <item name="accentOrTextSecondary">?android:textColorSecondary</item>
-        <item name="accentOrTextPrimary">?android:textColorPrimary</item>
-        <item name="primaryOrTextSecondary">?android:textColorSecondary</item>
-        <item name="primaryOrTextPrimary">?android:textColorPrimary</item>
+        <item name="accentOrTextSecondary">?colorAccent</item>
+        <item name="accentOrTextPrimary">?colorAccent</item>
+        <item name="primaryOrTextSecondary">?colorPrimary</item>
+        <item name="primaryOrTextPrimary">?colorPrimary</item>
     </style>
 
     <style name="Theme.SagerNet.Dialog.Black">
         <item name="colorPrimary">@color/color_ng_black_primary</item>
         <item name="colorPrimaryDark">@color/color_ng_black_primary</item>
         <item name="colorAccent">@color/color_ng_black_accent</item>
-        <item name="colorMaterial100">@color/color_ng_black_primary</item>
+        <item name="colorMaterial100">@color/material_teal_100</item>
         <item name="colorMaterial300">@color/color_ng_black_primary</item>
 
-        <item name="selectedColorPrimary">@color/color_ng_black_accent</item>
-        <item name="fabColorBackground">@color/color_ng_black_accent</item>
-        <item name="itemShapeFillColor">@color/color_ng_black_accent</item>
+        <item name="selectedColorPrimary">@color/color_ng_black_primary</item>
+        <item name="fabColorBackground">@color/color_ng_black_primary</item>
+        <item name="itemShapeFillColor">@color/material_teal_100</item>
 
-        <item name="accentOrTextSecondary">?android:textColorSecondary</item>
-        <item name="accentOrTextPrimary">?android:textColorPrimary</item>
-        <item name="primaryOrTextSecondary">?android:textColorSecondary</item>
-        <item name="primaryOrTextPrimary">?android:textColorPrimary</item>
+        <item name="accentOrTextSecondary">?colorAccent</item>
+        <item name="accentOrTextPrimary">?colorAccent</item>
+        <item name="primaryOrTextSecondary">?colorPrimary</item>
+        <item name="primaryOrTextPrimary">?colorPrimary</item>
     </style>
 
     <style name="Theme.Start" parent="Theme.MaterialComponents.DayNight">
