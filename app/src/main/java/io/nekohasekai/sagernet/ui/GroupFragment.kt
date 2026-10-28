@@ -110,7 +110,18 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_new_group -> {
-                startActivity(Intent(context, GroupSettingsActivity::class.java))
+                val options = arrayOf(
+                    getString(R.string.group_create_subscription),
+                    getString(R.string.group_create)
+                )
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.group_create)
+                    .setItems(options) { _, which ->
+                        startActivity(Intent(context, GroupSettingsActivity::class.java).apply {
+                            putExtra(GroupSettingsActivity.EXTRA_IS_SUBSCRIPTION, which == 0)
+                        })
+                    }
+                    .show()
             }
 
             R.id.action_update_all -> {
@@ -319,12 +330,16 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
 
         lateinit var proxyGroup: ProxyGroup
         val groupName = binding.groupName
+        val groupBadge = binding.groupBadge
         val groupStatus = binding.groupStatus
         val groupTraffic = binding.groupTraffic
+        val groupTrafficProgress = binding.groupTrafficProgress
+        val groupExpire = binding.groupExpire
         val groupUser = binding.groupUser
         val editButton = binding.edit
         val optionsButton = binding.options
         val updateButton = binding.groupUpdate
+        val copyLinkButton = binding.groupCopyLink
         val subscriptionUpdateProgress = binding.subscriptionUpdateProgress
 
         override fun onMenuItemClick(item: MenuItem): Boolean {
@@ -336,6 +351,25 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             }
 
             when (item.itemId) {
+                R.id.action_copy_subscription_link -> {
+                    val link = proxyGroup.subscription?.link
+                    if (!link.isNullOrBlank()) {
+                        SagerNet.trySetPrimaryClip(link)
+                        activity.snackbar(getString(R.string.subscription_link_copied)).show()
+                    }
+                }
+
+                R.id.action_edit_group -> {
+                    startActivity(Intent(requireContext(), GroupSettingsActivity::class.java).apply {
+                        putExtra(GroupSettingsActivity.EXTRA_GROUP_ID, proxyGroup.id)
+                    })
+                }
+
+                R.id.action_test_group -> {
+                    DataStore.selectedGroup = proxyGroup.id
+                    activity.displayFragmentWithId(R.id.nav_configuration)
+                }
+
                 R.id.action_universal_qr -> {
                     QRCodeDialog(
                         proxyGroup.toUniversalLink(), proxyGroup.displayName()
@@ -372,20 +406,67 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                         .setNegativeButton(android.R.string.cancel, null)
                         .show()
                 }
+
+                R.id.action_delete_group -> {
+                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
+                        .setMessage(R.string.delete_group_prompt)
+                        .setPositiveButton(R.string.yes) { _, _ ->
+                            runOnDefaultDispatcher {
+                                GroupManager.deleteGroup(proxyGroup.id)
+                                groupAdapter.reload()
+                            }
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
             }
 
             return true
         }
 
-
         fun bind(group: ProxyGroup) {
             proxyGroup = group
 
-            itemView.setOnClickListener { }
+            itemView.setOnClickListener {
+                DataStore.selectedGroup = proxyGroup.id
+                activity.displayFragmentWithId(R.id.nav_configuration)
+                activity.snackbar(getString(R.string.switched_to_group, proxyGroup.displayName())).show()
+            }
+
+            itemView.setOnLongClickListener {
+                optionsButton.performClick()
+                true
+            }
 
             editButton.isGone = proxyGroup.ungrouped
-            updateButton.isInvisible = proxyGroup.type != GroupType.SUBSCRIPTION
+            updateButton.isVisible = proxyGroup.type == GroupType.SUBSCRIPTION
             groupName.text = proxyGroup.displayName()
+
+            when {
+                proxyGroup.ungrouped -> {
+                    groupBadge.text = getString(R.string.group_badge_default)
+                    groupBadge.setTextColor(itemView.context.getColorAttr(android.R.attr.textColorSecondary))
+                }
+                proxyGroup.type == GroupType.SUBSCRIPTION -> {
+                    groupBadge.text = getString(R.string.group_badge_subscription)
+                    groupBadge.setTextColor(itemView.context.getColorAttr(R.attr.colorPrimary))
+                }
+                else -> {
+                    groupBadge.text = getString(R.string.group_badge_basic)
+                    groupBadge.setTextColor(itemView.context.getColorAttr(android.R.attr.textColorSecondary))
+                }
+            }
+
+            val subLink = proxyGroup.subscription?.link
+            if (proxyGroup.type == GroupType.SUBSCRIPTION && !subLink.isNullOrBlank()) {
+                copyLinkButton.isVisible = true
+                copyLinkButton.setOnClickListener {
+                    SagerNet.trySetPrimaryClip(subLink)
+                    activity.snackbar(getString(R.string.subscription_link_copied)).show()
+                }
+            } else {
+                copyLinkButton.isVisible = false
+            }
 
             editButton.setOnClickListener {
                 startActivity(Intent(it.context, GroupSettingsActivity::class.java).apply {
@@ -405,16 +486,17 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
 
                 if (proxyGroup.type != GroupType.SUBSCRIPTION) {
                     popup.menu.removeItem(R.id.action_share_subscription)
+                    popup.menu.removeItem(R.id.action_copy_subscription_link)
+                }
+                if (proxyGroup.ungrouped) {
+                    popup.menu.removeItem(R.id.action_delete_group)
+                    popup.menu.removeItem(R.id.action_edit_group)
                 }
                 popup.setOnMenuItemClickListener(this)
                 popup.show()
             }
 
             if (proxyGroup.id in GroupUpdater.updating) {
-                (groupName.parent as LinearLayout).apply {
-                    setPadding(paddingLeft, dp2px(11), paddingRight, paddingBottom)
-                }
-
                 subscriptionUpdateProgress.isVisible = true
 
                 if (!GroupUpdater.progress.containsKey(proxyGroup.id)) {
@@ -430,20 +512,22 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 updateButton.isInvisible = true
                 editButton.isGone = true
             } else {
-                (groupName.parent as LinearLayout).apply {
-                    setPadding(paddingLeft, dp2px(15), paddingRight, paddingBottom)
-                }
-
                 subscriptionUpdateProgress.isVisible = false
-                updateButton.isInvisible = proxyGroup.type != GroupType.SUBSCRIPTION
+                updateButton.isVisible = proxyGroup.type == GroupType.SUBSCRIPTION
                 editButton.isGone = proxyGroup.ungrouped
             }
 
+            groupTrafficProgress.isVisible = false
+            groupExpire.isVisible = false
             val subscription = proxyGroup.subscription
-            if (subscription != null && subscription.bytesUsed > 0L) { // SIP008 & Open Online Config
+            if (subscription != null && subscription.bytesUsed > 0L) {
                 groupTraffic.isVisible = true
-                groupTraffic.text = if (subscription.bytesRemaining > 0L) {
-                    app.getString(
+                val total = subscription.bytesUsed + subscription.bytesRemaining
+                if (total > 0L && subscription.bytesRemaining > 0L) {
+                    groupTrafficProgress.isVisible = true
+                    val progress = ((subscription.bytesUsed.toDouble() / total.toDouble()) * 100).toInt().coerceIn(0, 100)
+                    groupTrafficProgress.progress = progress
+                    groupTraffic.text = app.getString(
                         R.string.subscription_traffic, Formatter.formatFileSize(
                             app, subscription.bytesUsed
                         ), Formatter.formatFileSize(
@@ -451,14 +535,13 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                         )
                     )
                 } else {
-                    app.getString(
+                    groupTraffic.text = app.getString(
                         R.string.subscription_used, Formatter.formatFileSize(
                             app, subscription.bytesUsed
                         )
                     )
                 }
-                groupStatus.setPadding(0)
-            } else if (subscription != null && !subscription.subscriptionUserinfo.isNullOrBlank()) { // Raw
+            } else if (subscription != null && !subscription.subscriptionUserinfo.isNullOrBlank()) {
                 var text = ""
 
                 fun get(regex: String): String? {
@@ -478,21 +561,25 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                     val total = get("total=([0-9]+)")?.toLong() ?: 0
                     val remain = total - used
                     if (used > 0 || total > 0) {
-                        text += if (remain > 0) {
-                            getString(
+                        if (total > 0 && remain > 0) {
+                            groupTrafficProgress.isVisible = true
+                            val progress = ((used.toDouble() / total.toDouble()) * 100).toInt().coerceIn(0, 100)
+                            groupTrafficProgress.progress = progress
+                            text += getString(
                                 R.string.subscription_traffic,
                                 used.toBytesString(),
                                 remain.toBytesString()
                             )
                         } else {
-                            getString(R.string.subscription_used, used.toBytesString())
+                            text += getString(R.string.subscription_used, used.toBytesString())
                         }
                     }
-                    get("expire=([0-9]+)")?.apply {
-                        text += "\n"
-                        text += getString(
-                            R.string.subscription_expire,
-                            Util.timeStamp2Text(this.toLong() * 1000)
+                    val expire = get("expire=([0-9]+)")?.toLongOrNull()
+                    if (expire != null && expire > 0L) {
+                        groupExpire.isVisible = true
+                        groupExpire.text = getString(
+                            R.string.group_expire_date,
+                            Util.timeStamp2Text(expire * 1000)
                         )
                     }
                 } catch (_: NumberFormatException) {
@@ -502,19 +589,18 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 if (text.isNotEmpty()) {
                     groupTraffic.isVisible = true
                     groupTraffic.text = text
-                    groupStatus.setPadding(0)
                 }
             } else {
                 groupTraffic.isVisible = false
-                groupStatus.setPadding(0, 0, 0, dp2px(4))
             }
 
             groupUser.text = subscription?.username ?: ""
+            groupUser.isVisible = !subscription?.username.isNullOrBlank()
 
             runOnDefaultDispatcher {
                 val size = SagerDatabase.proxyDao.countByGroup(group.id)
                 onMainDispatcher {
-                    @Suppress("DEPRECATION") when (group.type) {
+                    when (group.type) {
                         GroupType.BASIC -> {
                             if (size == 0L) {
                                 groupStatus.setText(R.string.group_status_empty)
@@ -524,21 +610,20 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                         }
 
                         GroupType.SUBSCRIPTION -> {
-                            groupStatus.text = if (size == 0L) {
-                                getString(R.string.group_status_empty_subscription)
+                            val lastUp = group.subscription?.lastUpdated ?: 0
+                            if (size == 0L && lastUp == 0) {
+                                groupStatus.setText(R.string.group_status_empty_subscription)
                             } else {
-                                val date = Date(group.subscription!!.lastUpdated * 1000L)
-                                getString(
+                                val date = Date(lastUp * 1000L)
+                                groupStatus.text = getString(
                                     R.string.group_status_proxies_subscription,
                                     size,
                                     "${date.month + 1} - ${date.date}"
                                 )
                             }
-
                         }
                     }
                 }
-
             }
 
         }

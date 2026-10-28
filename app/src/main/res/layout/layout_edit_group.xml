@@ -1,89 +1,428 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:orientation="vertical">
+
+    <include
+        layout="@layout/layout_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/group_name_layout"
+            <!-- 1. Mode Toggle (Subscription vs Basic) -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/group_type_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_marginRight="4dp"
-                android:layout_marginBottom="4dp">
+                android:layout_marginBottom="14dp"
+                app:checkedButton="@id/btn_type_subscription"
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/group_name"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_type_subscription"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="@string/group_name"
-                    android:inputType="textNoSuggestions" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_weight="1"
+                    android:text="@string/group_type_subscription"
+                    app:icon="@drawable/ic_baseline_link_24"
+                    app:iconGravity="textStart" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/group_links_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginRight="4dp"
-                android:layout_marginBottom="4dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/group_subscription_link"
-                    android:layout_width="match_parent"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_type_basic"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="@string/group_subscription_link"
-                    android:inputType="textNoSuggestions|textMultiLine" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_weight="1"
+                    android:text="@string/group_type_basic"
+                    app:icon="@drawable/ic_baseline_layers_24"
+                    app:iconGravity="textStart" />
 
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- 2. Clipboard Link Hint Banner -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/deduplication_card"
+                android:id="@+id/card_clipboard_hint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginRight="4dp"
-                android:layout_marginBottom="4dp"
-                app:cardElevation="2dp">
+                android:layout_marginBottom="14dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:visibility="gone"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="1dp"
+                app:strokeColor="?colorPrimary"
+                app:strokeWidth="1dp"
+                tools:visibility="visible">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="4dp">
+                    android:padding="12dp">
 
-                    <TextView
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        app:srcCompat="@drawable/ic_baseline_link_24"
+                        app:tint="?colorPrimary" />
+
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginHorizontal="10dp"
                         android:layout_weight="1"
-                        android:text="@string/deduplication"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
 
-                    <com.google.android.material.checkbox.MaterialCheckBox
-                        android:id="@+id/deduplication"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/clipboard_link_detected"
+                            android:textColor="?colorPrimary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/text_clipboard_url"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp"
+                            tools:text="https://example.com/sub/token" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+            <!-- 3. Subscription Section -->
+            <LinearLayout
+                android:id="@+id/layout_subscription_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/subscription_link_layout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/group_subscription_link"
+                    app:endIconMode="clear_text"
+                    app:helperText="@string/subscription_link_helper"
+                    app:helperTextEnabled="true">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_subscription_link"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top|start"
+                        android:inputType="textUri|textMultiLine|textNoSuggestions"
+                        android:maxLines="5"
+                        android:minLines="2" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Action Bar for link: Paste & Scan -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_scan_qr"
+                        style="?attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:minWidth="0dp"
+                        android:text="@string/scan_qr"
+                        android:textSize="12sp"
+                        app:icon="@drawable/ic_baseline_camera_24"
+                        app:iconSize="16dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_paste_clipboard"
+                        style="?attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:minWidth="0dp"
+                        android:text="@string/paste_from_clipboard"
+                        android:textSize="12sp"
+                        app:icon="@drawable/ic_baseline_import_contacts_24"
+                        app:iconSize="16dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 4. Group Name -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/group_name_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/group_name"
+                app:endIconMode="clear_text"
+                app:helperText="@string/group_name_helper"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_group_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textNoSuggestions"
+                    android:singleLine="true" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 5. Sort Order Dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/group_order_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/group_order">
+
+                <AutoCompleteTextView
+                    android:id="@+id/input_group_order"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 6. Advanced Options (Collapsible Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_advanced"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Header Row -->
+                    <LinearLayout
+                        android:id="@+id/advanced_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            app:srcCompat="@drawable/ic_action_settings"
+                            app:tint="?colorPrimary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="@string/advanced_settings"
+                            android:textAppearance="?android:attr/textAppearanceMedium"
+                            android:textStyle="bold" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/advanced_arrow"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            app:srcCompat="@drawable/ic_baseline_low_priority_24"
+                            app:tint="?android:attr/textColorSecondary" />
+
+                    </LinearLayout>
+
+                    <!-- Expandable Content -->
+                    <LinearLayout
+                        android:id="@+id/advanced_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingBottom="16dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <!-- Subscription only settings -->
+                        <LinearLayout
+                            android:id="@+id/layout_subscription_advanced"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switch_auto_update"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="@string/auto_update" />
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/auto_update_delay_layout"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:hint="@string/auto_update_delay">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/input_auto_update_delay"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number"
+                                    android:text="1440" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switch_update_when_connected"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/update_when_connected_only" />
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/custom_ua_layout"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:hint="@string/subscription_user_agent">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/input_user_agent"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="textNoSuggestions"
+                                    android:singleLine="true" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switch_deduplication"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/deduplication" />
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switch_force_resolve"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/force_resolve" />
+
+                        </LinearLayout>
+
+                        <!-- Common options -->
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_is_selector"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/use_selector" />
+
+                        <!-- Front Proxy -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/front_proxy"
+                            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_front_proxy"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="start|center_vertical"
+                            android:text="@string/none"
+                            app:icon="@drawable/ic_hardware_router"
+                            app:iconGravity="textStart" />
+
+                        <!-- Landing Proxy -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/landing_proxy"
+                            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_landing_proxy"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="start|center_vertical"
+                            android:text="@string/none"
+                            app:icon="@drawable/baseline_public_24"
+                            app:iconGravity="textStart" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Bottom Action Buttons -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_and_update"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="@string/save_and_update"
+                android:textSize="15sp"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/ic_baseline_download_24"
+                app:iconGravity="textStart" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_only"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/save_only" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

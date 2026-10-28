@@ -211,7 +211,10 @@ class ConfigurationFragment @JvmOverloads constructor(
             if (adapter.groupList.size > position) {
                 tab.text = adapter.groupList[position].displayName()
             }
-            tab.view.setOnLongClickListener { // clear toast
+            tab.view.setOnLongClickListener {
+                if (adapter.groupList.size > position) {
+                    showGroupQuickMenu(tab.view, adapter.groupList[position])
+                }
                 true
             }
         }.attach()
@@ -343,8 +346,74 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     }
 
+    fun showGroupQuickMenu(anchor: View, group: ProxyGroup) {
+        val popup = PopupMenu(requireContext(), anchor)
+        if (group.type == GroupType.SUBSCRIPTION) {
+            popup.menu.add(0, 1, 0, R.string.group_update).setIcon(R.drawable.ic_baseline_refresh_24)
+            if (!group.subscription?.link.isNullOrBlank()) {
+                popup.menu.add(0, 2, 1, R.string.copy_subscription_link).setIcon(R.drawable.ic_baseline_link_24)
+            }
+        }
+        popup.menu.add(0, 3, 2, R.string.group_edit).setIcon(R.drawable.ic_image_edit)
+        popup.menu.add(0, 4, 3, R.string.test_group_proxies).setIcon(R.drawable.ic_baseline_speed_24)
+        if (!group.ungrouped) {
+            popup.menu.add(0, 5, 4, R.string.clear_profiles).setIcon(R.drawable.baseline_delete_sweep_24)
+            popup.menu.add(0, 6, 5, R.string.delete_group).setIcon(R.drawable.ic_action_delete)
+        }
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                1 -> GroupUpdater.startUpdate(group, true)
+                2 -> {
+                    val link = group.subscription?.link
+                    if (!link.isNullOrBlank()) {
+                        SagerNet.trySetPrimaryClip(link)
+                        snackbar(getString(R.string.subscription_link_copied)).show()
+                    }
+                }
+                3 -> startActivity(Intent(requireContext(), GroupSettingsActivity::class.java).apply {
+                    putExtra(GroupSettingsActivity.EXTRA_GROUP_ID, group.id)
+                })
+                4 -> urlTest()
+                5 -> {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.confirm)
+                        .setMessage(R.string.clear_profiles_message)
+                        .setPositiveButton(R.string.yes) { _, _ ->
+                            runOnDefaultDispatcher { GroupManager.clearGroup(group.id) }
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+                6 -> {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.confirm)
+                        .setMessage(R.string.delete_group_prompt)
+                        .setPositiveButton(R.string.yes) { _, _ ->
+                            runOnDefaultDispatcher { GroupManager.deleteGroup(group.id) }
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+            }
+            true
+        }
+        popup.show()
+    }
+
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_create_subscription -> {
+                startActivity(Intent(requireActivity(), GroupSettingsActivity::class.java).apply {
+                    putExtra(GroupSettingsActivity.EXTRA_IS_SUBSCRIPTION, true)
+                })
+            }
+
+            R.id.action_create_group_menu -> {
+                startActivity(Intent(requireActivity(), GroupSettingsActivity::class.java).apply {
+                    putExtra(GroupSettingsActivity.EXTRA_IS_SUBSCRIPTION, false)
+                })
+            }
+
             R.id.action_scan_qr_code -> {
                 startActivity(Intent(context, ScannerActivity::class.java))
             }

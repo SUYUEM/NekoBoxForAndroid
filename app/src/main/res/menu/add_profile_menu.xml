@@ -17,6 +17,12 @@
                 android:id="@+id/action_scan_qr_code"
                 android:title="@string/add_profile_methods_scan_qr_code" />
             <item
+                android:id="@+id/action_create_subscription"
+                android:title="@string/group_create_subscription" />
+            <item
+                android:id="@+id/action_create_group_menu"
+                android:title="@string/group_create" />
+            <item
                 android:id="@+id/action_import_clipboard"
                 android:title="@string/action_import" />
             <item
