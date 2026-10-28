@@ -205,11 +205,11 @@ class GroupSettingsActivity : ThemedActivity() {
         }
 
         binding.btnSaveAndUpdate.setOnClickListener {
-            save(autoUpdate = true)
+            save(triggerUpdateAfterSave = true)
         }
 
         binding.btnSaveOnly.setOnClickListener {
-            save(autoUpdate = false)
+            save(triggerUpdateAfterSave = false)
         }
     }
 
@@ -291,12 +291,12 @@ class GroupSettingsActivity : ThemedActivity() {
         }
     }
 
-    private fun save(autoUpdate: Boolean) {
+    private fun save(triggerUpdateAfterSave: Boolean) {
         val isSubscription = binding.btnTypeSubscription.isChecked
         val rawLink = binding.inputSubscriptionLink.text?.toString()?.trim() ?: ""
 
         if (isSubscription && rawLink.isBlank()) {
-            binding.subscriptionLinkLayout.error = getString(R.string.group_subscription_link) + " " + getString(R.string.empty)
+            binding.subscriptionLinkLayout.error = getString(R.string.group_subscription_link)
             binding.inputSubscriptionLink.requestFocus()
             return
         }
@@ -330,12 +330,12 @@ class GroupSettingsActivity : ThemedActivity() {
                 if (isSubscription) {
                     group.subscription = SubscriptionBean().applyDefaultValues().apply {
                         link = actualUrl
-                        autoUpdate = binding.switchAutoUpdate.isChecked
-                        autoUpdateDelay = binding.inputAutoUpdateDelay.text?.toString()?.toIntOrNull()?.coerceAtLeast(15) ?: 1440
-                        updateWhenConnectedOnly = binding.switchUpdateWhenConnected.isChecked
-                        customUserAgent = binding.inputUserAgent.text?.toString()?.trim() ?: ""
-                        deduplication = binding.switchDeduplication.isChecked
-                        forceResolve = binding.switchForceResolve.isChecked
+                        this.autoUpdate = binding.switchAutoUpdate.isChecked
+                        this.autoUpdateDelay = binding.inputAutoUpdateDelay.text?.toString()?.toIntOrNull()?.coerceAtLeast(15) ?: 1440
+                        this.updateWhenConnectedOnly = binding.switchUpdateWhenConnected.isChecked
+                        this.customUserAgent = binding.inputUserAgent.text?.toString()?.trim() ?: ""
+                        this.deduplication = binding.switchDeduplication.isChecked
+                        this.forceResolve = binding.switchForceResolve.isChecked
                     }
                 }
                 val created = GroupManager.createGroup(group)
@@ -372,14 +372,14 @@ class GroupSettingsActivity : ThemedActivity() {
                 groupToUpdate = entity
             }
 
-            if (autoUpdate && groupToUpdate?.type == GroupType.SUBSCRIPTION) {
+            if (triggerUpdateAfterSave && groupToUpdate?.type == GroupType.SUBSCRIPTION) {
                 GroupUpdater.startUpdate(groupToUpdate, true)
             }
 
             onMainDispatcher {
                 Toast.makeText(
                     this@GroupSettingsActivity,
-                    if (autoUpdate && groupToUpdate?.type == GroupType.SUBSCRIPTION) R.string.save_and_update else R.string.action_success,
+                    if (triggerUpdateAfterSave && groupToUpdate?.type == GroupType.SUBSCRIPTION) R.string.save_and_update else R.string.apply,
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()
