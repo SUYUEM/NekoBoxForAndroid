@@ -40,6 +40,10 @@
     <string name="tap_to_switch">點擊切換至該分組</string>
     <string name="clear_proxy_selection">清除 / 無</string>
     <string name="choose_proxy">選擇節點...</string>
+    <string name="none">無</string>
+    <string name="scan_qr">掃碼</string>
+    <string name="copy_toast_msg">已複製到剪貼簿</string>
+    <string name="group_expire_date">到期時間：%s</string>
     <string name="group_edit">編輯</string>
     <string name="group_edit_subscription">編輯訂閱</string>
     <string name="group_status_empty">空白群組</string>

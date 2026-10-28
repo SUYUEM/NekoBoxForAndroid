@@ -53,6 +53,10 @@
     <string name="tap_to_switch">Tap card to switch to this group</string>
     <string name="clear_proxy_selection">None / Clear</string>
     <string name="choose_proxy">Choose Proxy...</string>
+    <string name="none">None</string>
+    <string name="scan_qr">Scan</string>
+    <string name="copy_toast_msg">Copied to clipboard</string>
+    <string name="group_expire_date">Expires: %s</string>
     <string name="group_edit">Edit group</string>
     <string name="group_edit_subscription">Edit subscription</string>
     <string name="group_status_empty">Empty group</string>

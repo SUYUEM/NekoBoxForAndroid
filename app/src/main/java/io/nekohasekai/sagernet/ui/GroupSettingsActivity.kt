@@ -389,7 +389,7 @@ class GroupSettingsActivity : ThemedActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         if (editingId != 0L) {
-            menu.add(0, R.id.action_delete, 0, R.string.action_delete)
+            menu.add(0, R.id.action_delete, 0, R.string.delete)
                 .setIcon(R.drawable.ic_action_delete)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }

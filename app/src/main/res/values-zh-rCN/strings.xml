@@ -41,6 +41,10 @@
     <string name="tap_to_switch">点击切换至该分组</string>
     <string name="clear_proxy_selection">清除 / 无</string>
     <string name="choose_proxy">选择节点...</string>
+    <string name="none">无</string>
+    <string name="scan_qr">扫码</string>
+    <string name="copy_toast_msg">已复制到剪贴板</string>
+    <string name="group_expire_date">到期时间：%s</string>
     <string name="group_edit">编辑</string>
     <string name="group_edit_subscription">编辑订阅</string>
     <string name="group_status_empty">空</string>
