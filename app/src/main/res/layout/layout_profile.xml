@@ -1,178 +1,188 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Based on: https://github.com/android/platform_frameworks_base/blob/505e3ab/core/res/res/layout/simple_list_item_2.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="6dp"
-    android:layout_marginVertical="3.5dp"
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginVertical="4dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="1.5dp">
+    android:foreground="?attr/selectableItemBackground"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/fl_card_stroke"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:id="@+id/content_lin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:focusable="true"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="12dp">
 
+        <!-- Top Row: Active Indicator, Node Name, Edit/Share/Remove Icons -->
         <LinearLayout
-            android:id="@+id/selected_view"
-            android:layout_width="4dp"
-            android:layout_height="match_parent"
-            android:background="?selectedColorPrimary"
-            android:orientation="horizontal"
-            android:visibility="invisible"
-            tools:visibility="visible" />
-
-        <LinearLayout
-
+            android:id="@+id/container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:nextFocusRight="@+id/edit"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
+            <!-- FlClash Active Pill / Check Indicator -->
             <LinearLayout
-                android:id="@+id/container"
-                android:layout_width="match_parent"
+                android:id="@+id/selected_view"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="12dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp">
-
-                    <TextView
-                        android:id="@+id/profile_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textStyle="bold"
-                        tools:text="@string/profile_name" />
-                </LinearLayout>
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/edit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/edit"
-                    android:focusable="true"
-                    android:padding="12dp"
-                    app:srcCompat="@drawable/ic_image_edit" />
-
-                <LinearLayout
-                    android:id="@+id/share"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/share"
-                    android:focusable="true"
-                    android:nextFocusLeft="@+id/container">
-
-                    <LinearLayout
-                        android:id="@+id/share_layer"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="12dp">
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:id="@+id/shareIcon"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:srcCompat="@drawable/ic_social_share" />
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/remove"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/delete"
-                    android:focusable="true"
-                    android:padding="12dp"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/ic_action_delete" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="4dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_pill_fast"
+                android:gravity="center"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
                 <TextView
-                    android:id="@+id/profile_address"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/server_address"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:attr/textColorSecondary" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/traffic_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/traffic"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:attr/textColorSecondary" />
-
+                    android:text="✓"
+                    android:textColor="@color/fl_pill_fast_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/profile_name"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="12dp">
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="14.5sp"
+                android:textStyle="bold"
+                tools:text="🇯🇵 日本 IEPL专线 01" />
 
-                <TextView
-                    android:id="@+id/profile_type"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?attr/accentOrTextSecondary" />
+            <!-- Edit Button -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/edit"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/edit"
+                android:focusable="true"
+                android:padding="6dp"
+                app:srcCompat="@drawable/ic_image_edit"
+                app:tint="?android:attr/textColorSecondary" />
+
+            <!-- Share Button -->
+            <LinearLayout
+                android:id="@+id/share"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/share"
+                android:focusable="true"
+                android:gravity="center">
 
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
+                    android:id="@+id/share_layer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:padding="6dp">
 
-                <TextView
-                    android:id="@+id/profile_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?attr/accentOrTextSecondary" />
-
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/shareIcon"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:srcCompat="@drawable/ic_social_share"
+                        app:tint="?android:attr/textColorSecondary" />
+                </LinearLayout>
             </LinearLayout>
+
+            <!-- Delete Button -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/remove"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/delete"
+                android:focusable="true"
+                android:padding="6dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_action_delete"
+                app:tint="?android:attr/textColorSecondary" />
+
+        </LinearLayout>
+
+        <!-- Bottom Row: Protocol Badge, Server Address / Traffic, Latency Badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Protocol Badge -->
+            <TextView
+                android:id="@+id/profile_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_badge_rounded"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?colorPrimary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="VLESS" />
+
+            <!-- Address / Traffic Text -->
+            <TextView
+                android:id="@+id/profile_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="middle"
+                android:maxLines="1"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="11sp"
+                tools:text="104.28.19.42:443" />
+
+            <TextView
+                android:id="@+id/traffic_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="11sp"
+                android:visibility="gone"
+                tools:text="1.2 MB↑ 24 MB↓" />
+
+            <!-- FlClash Latency Pill Badge -->
+            <TextView
+                android:id="@+id/profile_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_pill_neutral"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:minWidth="48dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:text="-- ms"
+                android:textColor="@color/fl_pill_neutral_text"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="48 ms" />
 
         </LinearLayout>
 

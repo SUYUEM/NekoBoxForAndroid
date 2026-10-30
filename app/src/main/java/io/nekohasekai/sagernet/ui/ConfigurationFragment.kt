@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -1633,33 +1634,66 @@ class ConfigurationFragment @JvmOverloads constructor(
                 (trafficText.parent as View).isGone =
                     (!showTraffic || proxyEntity.status <= 0) && address.isBlank()
 
-                if (proxyEntity.status <= 0) {
-                    if (showTraffic) {
-                        profileStatus.text = trafficText.text
-                        profileStatus.setTextColor(requireContext().getColorAttr(android.R.attr.textColorSecondary))
-                        trafficText.text = ""
-                    } else {
-                        profileStatus.text = ""
+                // FlClash Latency Pill Badge
+                when (proxyEntity.status) {
+                    1 -> {
+                        val ping = proxyEntity.ping
+                        profileStatus.text = "$ping ms"
+                        if (ping in 1..300) {
+                            profileStatus.setBackgroundResource(R.drawable.bg_pill_fast)
+                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_fast_text))
+                        } else if (ping in 301..800) {
+                            profileStatus.setBackgroundResource(R.drawable.bg_pill_medium)
+                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_medium_text))
+                        } else {
+                            profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
+                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
+                        }
+                        profileStatus.setOnClickListener(null)
                     }
-                } else if (proxyEntity.status == 1) {
-                    profileStatus.text = getString(R.string.available, proxyEntity.ping)
-                    profileStatus.setTextColor(requireContext().getColour(R.color.material_green_500))
-                } else {
-                    profileStatus.setTextColor(requireContext().getColour(R.color.material_red_500))
-                    if (proxyEntity.status == 2) {
-                        profileStatus.text = proxyEntity.error
+                    2 -> {
+                        profileStatus.text = proxyEntity.error ?: "Error"
+                        profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
+                        profileStatus.setOnClickListener(null)
                     }
-                }
-
-                if (proxyEntity.status == 3) {
-                    val err = proxyEntity.error ?: "<?>"
-                    val msg = Protocols.genFriendlyMsg(err)
-                    profileStatus.text = if (msg != err) msg else getString(R.string.unavailable)
-                    profileStatus.setOnClickListener {
-                        alert(err).tryToShow()
+                    3 -> {
+                        val err = proxyEntity.error ?: "Timeout"
+                        val msg = Protocols.genFriendlyMsg(err)
+                        profileStatus.text = if (msg != err) msg else "Timeout"
+                        profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
+                        profileStatus.setOnClickListener {
+                            alert(err).tryToShow()
+                        }
                     }
-                } else {
-                    profileStatus.setOnClickListener(null)
+                    0 -> {
+                        profileStatus.text = "..."
+                        profileStatus.setBackgroundResource(R.drawable.bg_pill_neutral)
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_neutral_text))
+                        profileStatus.setOnClickListener(null)
+                    }
+                    else -> {
+                        if (proxyEntity.ping > 0) {
+                            val ping = proxyEntity.ping
+                            profileStatus.text = "$ping ms"
+                            if (ping <= 300) {
+                                profileStatus.setBackgroundResource(R.drawable.bg_pill_fast)
+                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_fast_text))
+                            } else if (ping <= 800) {
+                                profileStatus.setBackgroundResource(R.drawable.bg_pill_medium)
+                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_medium_text))
+                            } else {
+                                profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
+                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
+                            }
+                        } else {
+                            profileStatus.text = "-- ms"
+                            profileStatus.setBackgroundResource(R.drawable.bg_pill_neutral)
+                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_neutral_text))
+                        }
+                        profileStatus.setOnClickListener(null)
+                    }
                 }
 
                 editButton.setOnClickListener {
@@ -1692,7 +1726,21 @@ class ConfigurationFragment @JvmOverloads constructor(
                     selected && DataStore.serviceState.started && DataStore.currentProfile == proxyEntity.id
                 editButton.isEnabled = !started
                 removeButton.isEnabled = !started
-                selectedView.visibility = if (selected) View.VISIBLE else View.INVISIBLE
+                selectedView.isVisible = selected
+
+                // FlClash Active Card Highlighting
+                val card = view as? com.google.android.material.card.MaterialCardView
+                if (card != null) {
+                    if (selected) {
+                        card.strokeWidth = dp2px(1.5f)
+                        card.strokeColor = ContextCompat.getColor(view.context, R.color.fl_card_active_stroke)
+                        card.setCardBackgroundColor(ContextCompat.getColor(view.context, R.color.fl_card_active_bg))
+                    } else {
+                        card.strokeWidth = dp2px(1f)
+                        card.strokeColor = ContextCompat.getColor(view.context, R.color.fl_card_stroke)
+                        card.setCardBackgroundColor(ContextCompat.getColor(view.context, R.color.fl_card_bg))
+                    }
+                }
 
                 if (!(select || proxyEntity.type == ProxyEntity.TYPE_CHAIN)) {
                     shareLayer.setBackgroundColor(Color.TRANSPARENT)

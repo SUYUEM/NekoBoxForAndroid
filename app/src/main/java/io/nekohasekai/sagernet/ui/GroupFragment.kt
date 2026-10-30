@@ -10,7 +10,11 @@ import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.*
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -58,6 +62,38 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
         groupListView.adapter = groupAdapter
 
         undoManager = UndoSnackbarManager(activity, groupAdapter)
+
+        view.findViewById<View>(R.id.fab_add_group)?.setOnClickListener {
+            val items = arrayOf(
+                getString(R.string.group_create_subscription),
+                getString(R.string.group_create),
+                getString(R.string.action_import_clipboard)
+            )
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.menu_group)
+                .setItems(items) { _, which ->
+                    when (which) {
+                        0 -> startActivity(Intent(requireActivity(), GroupSettingsActivity::class.java).apply {
+                            putExtra(GroupSettingsActivity.EXTRA_IS_SUBSCRIPTION, true)
+                        })
+                        1 -> startActivity(Intent(requireActivity(), GroupSettingsActivity::class.java).apply {
+                            putExtra(GroupSettingsActivity.EXTRA_IS_SUBSCRIPTION, false)
+                        })
+                        2 -> {
+                            val text = SagerNet.getClipboardText()
+                            if (text.isBlank()) {
+                                activity.snackbar(getString(R.string.clipboard_empty)).show()
+                            } else {
+                                val uri = android.net.Uri.parse(text.trim())
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    activity.importSubscription(uri)
+                                }
+                            }
+                        }
+                    }
+                }
+                .show()
+        }
 
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.START
@@ -329,8 +365,10 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
         PopupMenu.OnMenuItemClickListener {
 
         lateinit var proxyGroup: ProxyGroup
+        val contentCard = binding.content
         val groupName = binding.groupName
         val groupBadge = binding.groupBadge
+        val groupActiveBadge = binding.groupActiveBadge
         val groupStatus = binding.groupStatus
         val groupTraffic = binding.groupTraffic
         val groupTrafficProgress = binding.groupTrafficProgress
@@ -427,8 +465,21 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
         fun bind(group: ProxyGroup) {
             proxyGroup = group
 
+            val isActive = proxyGroup.id == DataStore.selectedGroup
+            groupActiveBadge.isVisible = isActive
+            if (isActive) {
+                contentCard.strokeWidth = dp2px(1.5f)
+                contentCard.strokeColor = ContextCompat.getColor(itemView.context, R.color.fl_card_active_stroke)
+                contentCard.setCardBackgroundColor(ContextCompat.getColor(itemView.context, R.color.fl_card_active_bg))
+            } else {
+                contentCard.strokeWidth = dp2px(1f)
+                contentCard.strokeColor = ContextCompat.getColor(itemView.context, R.color.fl_card_stroke)
+                contentCard.setCardBackgroundColor(ContextCompat.getColor(itemView.context, R.color.fl_card_bg))
+            }
+
             itemView.setOnClickListener {
                 DataStore.selectedGroup = proxyGroup.id
+                groupAdapter.notifyDataSetChanged()
                 activity.displayFragmentWithId(R.id.nav_configuration)
                 activity.snackbar(getString(R.string.switched_to_group, proxyGroup.displayName())).show()
             }

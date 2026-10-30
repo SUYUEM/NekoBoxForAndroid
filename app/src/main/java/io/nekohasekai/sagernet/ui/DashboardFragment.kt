@@ -50,6 +50,8 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
     private lateinit var btnPingTest: MaterialButton
 
     private lateinit var btnQuickRestart: MaterialButton
+    private lateinit var btnQuickPingAll: MaterialButton
+    private lateinit var btnQuickLogs: MaterialButton
     private lateinit var btnQuickRules: MaterialButton
 
     private var cumulativeTx: Long = 0L
@@ -85,6 +87,8 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
         btnPingTest = view.findViewById(R.id.btn_ping_test)
 
         btnQuickRestart = view.findViewById(R.id.btn_quick_restart)
+        btnQuickPingAll = view.findViewById(R.id.btn_quick_ping_all)
+        btnQuickLogs = view.findViewById(R.id.btn_quick_logs)
         btnQuickRules = view.findViewById(R.id.btn_quick_rules)
 
         val activity = requireActivity() as MainActivity
@@ -148,6 +152,16 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
             }
         }
 
+        // Quick ping all
+        btnQuickPingAll.setOnClickListener {
+            activity.displayFragmentWithId(R.id.nav_configuration)
+        }
+
+        // Quick logs
+        btnQuickLogs.setOnClickListener {
+            activity.displayFragmentWithId(R.id.nav_logcat)
+        }
+
         // Quick rules
         btnQuickRules.setOnClickListener {
             activity.displayFragmentWithId(R.id.nav_route)
@@ -206,7 +220,7 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
                 statusSubtext.text = getString(R.string.dashboard_unprotected_hint)
                 btnConnect.text = getString(R.string.dashboard_action_connect)
                 btnConnect.setIconResource(R.drawable.ic_service_idle)
-                btnConnect.setBackgroundColor(Color.parseColor("#0284C7")) // Primary Sky Blue
+                btnConnect.setBackgroundColor(Color.parseColor("#00A389")) // Fresh Mint Theme
                 updateSpeed(0L, 0L)
             }
         }
@@ -259,11 +273,29 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
                 if (proxyEntity != null) {
                     activeNodeName.text = proxyEntity.displayName()
                     activeNodeProtocol.text = proxyEntity.displayType()
-                    activeNodePing.text = if (proxyEntity.ping > 0) "${proxyEntity.ping} ms" else "-- ms"
+                    if (proxyEntity.ping > 0) {
+                        activeNodePing.text = "${proxyEntity.ping} ms"
+                        if (proxyEntity.ping <= 400) {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_fast)
+                            activeNodePing.setTextColor(Color.parseColor("#16A34A"))
+                        } else if (proxyEntity.ping <= 999) {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_medium)
+                            activeNodePing.setTextColor(Color.parseColor("#D97706"))
+                        } else {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_slow)
+                            activeNodePing.setTextColor(Color.parseColor("#DC2626"))
+                        }
+                    } else {
+                        activeNodePing.text = "-- ms"
+                        activeNodePing.setBackgroundResource(R.drawable.bg_pill_neutral)
+                        activeNodePing.setTextColor(Color.parseColor("#64748B"))
+                    }
                 } else {
                     activeNodeName.text = getString(R.string.dashboard_no_node)
                     activeNodeProtocol.text = "PROXY"
                     activeNodePing.text = "-- ms"
+                    activeNodePing.setBackgroundResource(R.drawable.bg_pill_neutral)
+                    activeNodePing.setTextColor(Color.parseColor("#64748B"))
                 }
 
                 activeProfileName.text = currentGroup?.displayName() ?: getString(R.string.dashboard_no_profile)
@@ -279,24 +311,32 @@ class DashboardFragment : ToolbarFragment(R.layout.layout_dashboard), Toolbar.On
         }
 
         activeNodePing.text = "..."
+        activeNodePing.setBackgroundResource(R.drawable.bg_pill_neutral)
+        activeNodePing.setTextColor(Color.parseColor("#64748B"))
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val latency = activity.urlTest()
                 withContext(Dispatchers.Main) {
                     if (isAdded) {
                         activeNodePing.text = "$latency ms"
-                        activeNodePing.setTextColor(
-                            if (latency in 1..400) Color.parseColor("#10B981")
-                            else if (latency in 401..999) Color.parseColor("#F59E0B")
-                            else Color.parseColor("#EF4444")
-                        )
+                        if (latency in 1..400) {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_fast)
+                            activeNodePing.setTextColor(Color.parseColor("#16A34A"))
+                        } else if (latency in 401..999) {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_medium)
+                            activeNodePing.setTextColor(Color.parseColor("#D97706"))
+                        } else {
+                            activeNodePing.setBackgroundResource(R.drawable.bg_pill_slow)
+                            activeNodePing.setTextColor(Color.parseColor("#DC2626"))
+                        }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     if (isAdded) {
                         activeNodePing.text = "Timeout"
-                        activeNodePing.setTextColor(Color.parseColor("#EF4444"))
+                        activeNodePing.setBackgroundResource(R.drawable.bg_pill_slow)
+                        activeNodePing.setTextColor(Color.parseColor("#DC2626"))
                     }
                 }
             }

@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <color name="theme_primary">#0284C7</color>
-    <color name="theme_primary_dark">#0284C7</color>
-    <color name="theme_accent">#06B6D4</color>
-    <color name="theme_material_100">#E0F2FE</color>
-    <color name="theme_material_300">#0284C7</color>
+    <!-- Bright Fresh FlClash Theme Palette (Mint & Teal) -->
+    <color name="theme_primary">#00A389</color>
+    <color name="theme_primary_dark">#008770</color>
+    <color name="theme_accent">#02C39A</color>
+    <color name="theme_material_100">#E6F8F3</color>
+    <color name="theme_material_300">#00A389</color>
+
+    <!-- FlClash Specific Fresh UI Colors -->
+    <color name="fl_bg_light">#F6F9F8</color>
+    <color name="fl_card_bg">#FFFFFF</color>
+    <color name="fl_card_stroke">#E5EBE8</color>
+    <color name="fl_card_active_bg">#EDFBF7</color>
+    <color name="fl_card_active_stroke">#00A389</color>
+    <color name="fl_pill_fast_bg">#DCFCE7</color>
+    <color name="fl_pill_fast_text">#16A34A</color>
+    <color name="fl_pill_medium_bg">#FEF3C7</color>
+    <color name="fl_pill_medium_text">#D97706</color>
+    <color name="fl_pill_slow_bg">#FEE2E2</color>
+    <color name="fl_pill_slow_text">#DC2626</color>
+    <color name="fl_pill_neutral_bg">#F1F5F9</color>
+    <color name="fl_pill_neutral_text">#64748B</color>
 
     <integer-array name="material_colors">
         <item>@color/theme_primary</item>
