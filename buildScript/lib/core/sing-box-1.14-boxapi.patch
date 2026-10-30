@@ -1,5 +1,127 @@
+diff --git a/adapter/dns.go b/adapter/dns.go
+index cf949e3..5a18452 100644
+--- a/adapter/dns.go
++++ b/adapter/dns.go
+@@ -90,6 +90,11 @@ type DNSTransport interface {
+ 	ExchangeAsync(ctx context.Context, message *dns.Msg, callback func(response *dns.Msg, err error))
+ }
+ 
++type LegacyDNSTransport interface {
++	LegacyStrategy() C.DomainStrategy
++	LegacyClientSubnet() netip.Prefix
++}
++
+ type DNSTransportWithPreferredDomain interface {
+ 	DNSTransport
+ 	PreferredDomain(domain string) bool
+diff --git a/box.go b/box.go
+index 6247cf5..72ece75 100644
+--- a/box.go
++++ b/box.go
+@@ -189,6 +189,101 @@ func New(options Options) (*Box, error) {
+ 
+ 	var internalServices []adapter.LifecycleService
+ 	routeOptions := common.PtrValueOrDefault(options.Route)
++	dnsOutboundTags := make(map[string]bool)
++	options.Outbounds = common.Filter(options.Outbounds, func(it option.Outbound) bool {
++		if it.Type == C.TypeDNS {
++			if it.Tag != "" {
++				dnsOutboundTags[it.Tag] = true
++			}
++			return false
++		}
++		return true
++	})
++	if len(dnsOutboundTags) > 0 {
++		for i := range routeOptions.Rules {
++			if routeOptions.Rules[i].DefaultOptions.Action == C.RuleActionTypeRoute && dnsOutboundTags[routeOptions.Rules[i].DefaultOptions.RouteOptions.Outbound] {
++				routeOptions.Rules[i].DefaultOptions.Action = C.RuleActionTypeHijackDNS
++				routeOptions.Rules[i].DefaultOptions.RouteOptions = option.RouteActionOptions{}
++			}
++			if routeOptions.Rules[i].LogicalOptions.Action == C.RuleActionTypeRoute && dnsOutboundTags[routeOptions.Rules[i].LogicalOptions.RouteOptions.Outbound] {
++				routeOptions.Rules[i].LogicalOptions.Action = C.RuleActionTypeHijackDNS
++				routeOptions.Rules[i].LogicalOptions.RouteOptions = option.RouteActionOptions{}
++			}
++		}
++	}
++	hasSniffRule := common.Any(routeOptions.Rules, func(it option.Rule) bool {
++		return it.DefaultOptions.Action == C.RuleActionTypeSniff || it.LogicalOptions.Action == C.RuleActionTypeSniff
++	})
++	var legacySniffRules []option.Rule
++	var legacyResolveRules []option.Rule
++	for _, inb := range options.Inbounds {
++		var inOpts option.InboundOptions
++		if tunOpts, isTun := inb.Options.(*option.TunInboundOptions); isTun {
++			//nolint:staticcheck
++			inOpts = tunOpts.InboundOptions
++		} else if listenWrapper, isListen := inb.Options.(option.ListenOptionsWrapper); isListen {
++			//nolint:staticcheck
++			inOpts = listenWrapper.TakeListenOptions().InboundOptions
++		}
++		if !hasSniffRule && inOpts.SniffEnabled {
++			var inboundTags []string
++			if inb.Tag != "" {
++				inboundTags = []string{inb.Tag}
++			}
++			legacySniffRules = append(legacySniffRules, option.Rule{
++				Type: C.RuleTypeDefault,
++				DefaultOptions: option.DefaultRule{
++					RawDefaultRule: option.RawDefaultRule{
++						Inbound: inboundTags,
++					},
++					RuleAction: option.RuleAction{
++						Action: C.RuleActionTypeSniff,
++						SniffOptions: option.RouteActionSniff{
++							OverrideDestination: inOpts.SniffOverrideDestination,
++							Timeout:             inOpts.SniffTimeout,
++						},
++					},
++				},
++			})
++		}
++		if inOpts.DomainStrategy != option.DomainStrategy(C.DomainStrategyAsIS) {
++			var inboundTags []string
++			if inb.Tag != "" {
++				inboundTags = []string{inb.Tag}
++			}
++			legacyResolveRules = append(legacyResolveRules, option.Rule{
++				Type: C.RuleTypeDefault,
++				DefaultOptions: option.DefaultRule{
++					RawDefaultRule: option.RawDefaultRule{
++						Inbound: inboundTags,
++					},
++					RuleAction: option.RuleAction{
++						Action: C.RuleActionTypeResolve,
++						ResolveOptions: option.RouteActionResolve{
++							Strategy: inOpts.DomainStrategy,
++						},
++					},
++				},
++			})
++		}
++	}
++	if len(legacyResolveRules) > 0 {
++		insertIdx := 0
++		for i, r := range routeOptions.Rules {
++			if r.DefaultOptions.Action == C.RuleActionTypeHijackDNS || r.DefaultOptions.Action == C.RuleActionTypeSniff ||
++				r.LogicalOptions.Action == C.RuleActionTypeHijackDNS || r.LogicalOptions.Action == C.RuleActionTypeSniff {
++				insertIdx = i + 1
++			}
++		}
++		var newRules []option.Rule
++		newRules = append(newRules, routeOptions.Rules[:insertIdx]...)
++		newRules = append(newRules, legacyResolveRules...)
++		newRules = append(newRules, routeOptions.Rules[insertIdx:]...)
++		routeOptions.Rules = newRules
++	}
++	if len(legacySniffRules) > 0 {
++		routeOptions.Rules = append(legacySniffRules, routeOptions.Rules...)
++	}
+ 	certificateOptions := common.PtrValueOrDefault(options.Certificate)
+ 	if C.IsAndroid || certificateOptions.Store != "" && certificateOptions.Store != C.CertificateStoreSystem ||
+ 		len(certificateOptions.Certificate) > 0 ||
 diff --git a/boxapi/v2ray_stats_service.go b/boxapi/v2ray_stats_service.go
-index 3e96f42..cfd60d2 100644
+index 3e96f42..616e578 100644
 --- a/boxapi/v2ray_stats_service.go
 +++ b/boxapi/v2ray_stats_service.go
 @@ -9,6 +9,7 @@ import (
@@ -71,3 +193,966 @@ index 3e96f42..cfd60d2 100644
 +
 +func (t *statsFlowTracker) CloseFlow(reason tun.FlowCloseReason) {
 +}
+diff --git a/common/dialer/detour.go b/common/dialer/detour.go
+index b2fc3ef..8c667f6 100644
+--- a/common/dialer/detour.go
++++ b/common/dialer/detour.go
+@@ -66,14 +66,6 @@ func (d *DetourDialer) init() {
+ 	} else {
+ 		dialer = d.outboundManager.Default()
+ 	}
+-	if !d.defaultOutbound && !d.disableEmptyDirectCheck {
+-		if directDialer, isDirect := dialer.(DirectDialer); isDirect {
+-			if directDialer.IsEmpty() {
+-				d.initErr = E.New("detour to an empty direct outbound makes no sense")
+-				return
+-			}
+-		}
+-	}
+ 	d.dialer = dialer
+ }
+ 
+diff --git a/common/dialer/dialer.go b/common/dialer/dialer.go
+index f0e8043..36c537c 100644
+--- a/common/dialer/dialer.go
++++ b/common/dialer/dialer.go
+@@ -105,7 +105,10 @@ func NewWithOptions(options Options) (N.Dialer, error) {
+ 			}
+ 			resolveFallbackDelay = time.Duration(dialOptions.FallbackDelay)
+ 		} else if options.DirectResolver {
+-			return nil, E.New("missing domain resolver for domain server address")
++			if defaultOptions.DomainResolver != "" {
++				server = defaultOptions.DomainResolver
++			}
++			resolveFallbackDelay = time.Duration(dialOptions.FallbackDelay)
+ 		} else {
+ 			if defaultOptions.DomainResolver != "" {
+ 				dnsQueryOptions = defaultOptions.DomainResolveOptions
+@@ -119,10 +122,12 @@ func NewWithOptions(options Options) (N.Dialer, error) {
+ 				transports := dnsTransport.Transports()
+ 				if len(transports) < 2 {
+ 					dnsQueryOptions.Transport = dnsTransport.Default()
+-				} else if options.NewDialer {
+-					return nil, E.New("missing domain resolver for domain server address")
++				} else if transport, loaded := dnsTransport.Transport("dns-direct"); loaded {
++					dnsQueryOptions.Transport = transport
++				} else if transport, loaded := dnsTransport.Transport("dns-local"); loaded {
++					dnsQueryOptions.Transport = transport
+ 				} else {
+-					deprecated.Report(options.Context, deprecated.OptionMissingDomainResolver)
++					dnsQueryOptions.Transport = dnsTransport.Default()
+ 				}
+ 			}
+ 			if
+diff --git a/common/tls/ech.go b/common/tls/ech.go
+index 46ab50a..c8d7060 100644
+--- a/common/tls/ech.go
++++ b/common/tls/ech.go
+@@ -35,10 +35,6 @@ func parseECHClientConfig(ctx context.Context, clientConfig ECHCapableConfig, op
+ 		}
+ 		echConfig = content
+ 	}
+-	//nolint:staticcheck
+-	if options.ECH.PQSignatureSchemesEnabled || options.ECH.DynamicRecordSizingDisabled {
+-		return nil, E.New("legacy ECH options are deprecated in sing-box 1.12.0 and removed in sing-box 1.13.0")
+-	}
+ 	if len(echConfig) > 0 {
+ 		block, rest := pem.Decode(echConfig)
+ 		if block == nil || block.Type != "ECH CONFIGS" || len(rest) > 0 {
+@@ -74,10 +70,6 @@ func parseECHServerConfig(ctx context.Context, options option.InboundTLSOptions,
+ 		return E.Cause(err, "parse ECH keys")
+ 	}
+ 	tlsConfig.EncryptedClientHelloKeys = echKeys
+-	//nolint:staticcheck
+-	if options.ECH.PQSignatureSchemesEnabled || options.ECH.DynamicRecordSizingDisabled {
+-		return E.New("legacy ECH options are deprecated in sing-box 1.12.0 and removed in sing-box 1.13.0")
+-	}
+ 	return nil
+ }
+ 
+diff --git a/dns/router.go b/dns/router.go
+index 46355c3..d77c373 100644
+--- a/dns/router.go
++++ b/dns/router.go
+@@ -335,6 +335,14 @@ func (r *Router) matchDNS(ctx context.Context, rules []adapter.DNSRule, allowFak
+ 					options.ClientSubnet = netip.Prefix{}
+ 					options.RemoveClientSubnet = true
+ 				}
++				if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++					if options.Strategy == C.DomainStrategyAsIS {
++						options.Strategy = legacyTransport.LegacyStrategy()
++					}
++					if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++						options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++					}
++				}
+ 				return transport, currentRule, currentRuleIndex
+ 			case *R.RuleActionDNSRouteOptions:
+ 				if action.Strategy != C.DomainStrategyAsIS {
+@@ -365,13 +373,21 @@ func (r *Router) matchDNS(ctx context.Context, rules []adapter.DNSRule, allowFak
+ 		}
+ 	}
+ 	transport := r.transport.Default()
++	if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++		if options.Strategy == C.DomainStrategyAsIS {
++			options.Strategy = legacyTransport.LegacyStrategy()
++		}
++		if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++			options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++		}
++	}
+ 	return transport, nil, -1
+ }
+ 
+ func (r *Router) applyDNSRouteOptions(options *adapter.DNSQueryOptions, routeOptions R.RuleActionDNSRouteOptions) {
+-	// Strategy is intentionally skipped here. A non-default DNS rule action strategy
+-	// forces legacy mode via resolveLegacyDNSMode, so this path is only reachable
+-	// when strategy remains at its default value.
++	if routeOptions.Strategy != C.DomainStrategyAsIS {
++		options.Strategy = routeOptions.Strategy
++	}
+ 	if routeOptions.DisableCache {
+ 		options.DisableCache = true
+ 	}
+@@ -412,6 +428,14 @@ func (r *Router) resolveDNSRoute(server string, routeOptions R.RuleActionDNSRout
+ 		return transport, dnsRouteStatusSkipped
+ 	}
+ 	r.applyDNSRouteOptions(options, routeOptions)
++	if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++		if options.Strategy == C.DomainStrategyAsIS {
++			options.Strategy = legacyTransport.LegacyStrategy()
++		}
++		if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++			options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++		}
++	}
+ 	if isFakeIP {
+ 		options.DisableCache = true
+ 	}
+@@ -764,7 +788,17 @@ func (r *Router) walkDNSRules(ctx context.Context, rules []adapter.DNSRule, mess
+ 	if len(state.armedRules) > 0 {
+ 		return exchangeWithRulesResult{}, &dnsWalkSuspension{drain: true}
+ 	}
+-	return exchangeWithRulesResult{}, &dnsWalkSuspension{pending: &dnsPendingExchange{transport: r.transport.Default(), options: state.effectiveOptions}}
++	defaultTransport := r.transport.Default()
++	defaultOptions := state.effectiveOptions
++	if legacyTransport, isLegacy := defaultTransport.(adapter.LegacyDNSTransport); isLegacy {
++		if defaultOptions.Strategy == C.DomainStrategyAsIS {
++			defaultOptions.Strategy = legacyTransport.LegacyStrategy()
++		}
++		if !defaultOptions.ClientSubnet.IsValid() && !defaultOptions.RemoveClientSubnet {
++			defaultOptions.ClientSubnet = legacyTransport.LegacyClientSubnet()
++		}
++	}
++	return exchangeWithRulesResult{}, &dnsWalkSuspension{pending: &dnsPendingExchange{transport: defaultTransport, options: defaultOptions}}
+ }
+ 
+ func (r *Router) exchangeWithRules(ctx context.Context, rules []adapter.DNSRule, message *mDNS.Msg, options adapter.DNSQueryOptions, allowFakeIP bool) exchangeWithRulesResult {
+@@ -1187,6 +1221,14 @@ func (r *Router) Exchange(ctx context.Context, message *mDNS.Msg, options adapte
+ 	)
+ 	if options.Transport != nil {
+ 		transport = options.Transport
++		if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++			if options.Strategy == C.DomainStrategyAsIS {
++				options.Strategy = legacyTransport.LegacyStrategy()
++			}
++			if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++				options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++			}
++		}
+ 		response, err = r.client.Exchange(ctx, transport, message, r.finalizeExchangeOptions(options), nil)
+ 	} else if !exchangeCtx.legacyDNSMode {
+ 		exchangeResult := r.exchangeWithRules(ctx, exchangeCtx.rules, message, options, true)
+@@ -1210,6 +1252,14 @@ func (r *Router) ExchangeAsync(ctx context.Context, message *mDNS.Msg, options a
+ 	ctx = exchangeCtx.ctx
+ 	if options.Transport != nil {
+ 		transport := options.Transport
++		if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++			if options.Strategy == C.DomainStrategyAsIS {
++				options.Strategy = legacyTransport.LegacyStrategy()
++			}
++			if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++				options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++			}
++		}
+ 		r.client.ExchangeAsync(ctx, transport, message, r.finalizeExchangeOptions(options), nil, func(response *mDNS.Msg, exchangeErr error) {
+ 			r.finishExchangeAsync(message, transport, response, exchangeErr, callback)
+ 		})
+@@ -1277,6 +1327,14 @@ func (r *Router) Lookup(ctx context.Context, domain string, options adapter.DNSQ
+ 	metadata.DestinationAddressMatchFromResponse = false
+ 	if options.Transport != nil {
+ 		transport := options.Transport
++		if legacyTransport, isLegacy := transport.(adapter.LegacyDNSTransport); isLegacy {
++			if options.Strategy == C.DomainStrategyAsIS {
++				options.Strategy = legacyTransport.LegacyStrategy()
++			}
++			if !options.ClientSubnet.IsValid() && !options.RemoveClientSubnet {
++				options.ClientSubnet = legacyTransport.LegacyClientSubnet()
++			}
++		}
+ 		if options.Strategy == C.DomainStrategyAsIS {
+ 			options.Strategy = r.defaultDomainStrategy
+ 		}
+@@ -1397,9 +1455,7 @@ func defaultRuleDisablesLegacyDNSMode(rule option.DefaultDNSRule) bool {
+ 	return rule.MatchResponse.IsEnabled() ||
+ 		hasResponseMatchFields(rule) ||
+ 		rule.Action == C.RuleActionTypeEvaluate ||
+-		rule.Action == C.RuleActionTypeRespond ||
+-		rule.IPVersion > 0 ||
+-		len(rule.QueryType) > 0
++		rule.Action == C.RuleActionTypeRespond
+ }
+ 
+ type dnsRuleModeFlags struct {
+@@ -1419,9 +1475,6 @@ func resolveLegacyDNSMode(router adapter.Router, rules []option.DNSRule, metadat
+ 	if err != nil {
+ 		return false, flags, err
+ 	}
+-	if flags.disabled && flags.neededFromStrategy {
+-		return false, flags, E.New(deprecated.OptionLegacyDNSRuleStrategy.MessageWithLink())
+-	}
+ 	if flags.disabled {
+ 		return false, flags, nil
+ 	}
+diff --git a/dns/transport/fakeip/fakeip.go b/dns/transport/fakeip/fakeip.go
+index 75db1cf..07d5145 100644
+--- a/dns/transport/fakeip/fakeip.go
++++ b/dns/transport/fakeip/fakeip.go
+@@ -9,7 +9,6 @@ import (
+ 	"github.com/sagernet/sing-box/dns"
+ 	"github.com/sagernet/sing-box/log"
+ 	"github.com/sagernet/sing-box/option"
+-	E "github.com/sagernet/sing/common/exceptions"
+ 	"github.com/sagernet/sing/common/logger"
+ 
+ 	mDNS "github.com/miekg/dns"
+@@ -33,7 +32,7 @@ func NewTransport(ctx context.Context, logger log.ContextLogger, tag string, opt
+ 	inet4Range := options.Inet4Range.Build(netip.Prefix{})
+ 	inet6Range := options.Inet6Range.Build(netip.Prefix{})
+ 	if !inet4Range.IsValid() && !inet6Range.IsValid() {
+-		return nil, E.New("at least one of inet4_range or inet6_range must be set")
++		inet4Range = netip.MustParsePrefix("198.18.0.0/15")
+ 	}
+ 	store := NewStore(ctx, logger, inet4Range, inet6Range)
+ 	return &Transport{
+@@ -62,7 +61,7 @@ func (t *Transport) Reset() {
+ func (t *Transport) Exchange(ctx context.Context, message *mDNS.Msg) (*mDNS.Msg, error) {
+ 	question := message.Question[0]
+ 	if question.Qtype != mDNS.TypeA && question.Qtype != mDNS.TypeAAAA {
+-		return nil, E.New("only IP queries are supported by fakeip")
++		return dns.FixedResponseStatus(message, mDNS.RcodeSuccess), nil
+ 	}
+ 	if question.Qtype == mDNS.TypeA && !t.inet4Enabled || question.Qtype == mDNS.TypeAAAA && !t.inet6Enabled {
+ 		return dns.FixedResponseStatus(message, mDNS.RcodeSuccess), nil
+diff --git a/dns/transport_adapter.go b/dns/transport_adapter.go
+index 1e6620f..b4f67c6 100644
+--- a/dns/transport_adapter.go
++++ b/dns/transport_adapter.go
+@@ -1,13 +1,21 @@
+ package dns
+ 
+ import (
++	"net/netip"
++
++	"github.com/sagernet/sing-box/adapter"
++	C "github.com/sagernet/sing-box/constant"
+ 	"github.com/sagernet/sing-box/option"
+ )
+ 
++var _ adapter.LegacyDNSTransport = (*TransportAdapter)(nil)
++
+ type TransportAdapter struct {
+ 	transportType string
+ 	transportTag  string
+ 	dependencies  []string
++	strategy      C.DomainStrategy
++	clientSubnet  netip.Prefix
+ }
+ 
+ func NewTransportAdapter(transportType string, transportTag string, dependencies []string) TransportAdapter {
+@@ -27,6 +35,8 @@ func NewTransportAdapterWithLocalOptions(transportType string, transportTag stri
+ 		transportType: transportType,
+ 		transportTag:  transportTag,
+ 		dependencies:  dependencies,
++		strategy:      C.DomainStrategy(localOptions.LegacyStrategy),
++		clientSubnet:  localOptions.LegacyClientSubnet,
+ 	}
+ }
+ 
+@@ -39,6 +49,8 @@ func NewTransportAdapterWithRemoteOptions(transportType string, transportTag str
+ 		transportType: transportType,
+ 		transportTag:  transportTag,
+ 		dependencies:  dependencies,
++		strategy:      C.DomainStrategy(remoteOptions.LegacyStrategy),
++		clientSubnet:  remoteOptions.LegacyClientSubnet,
+ 	}
+ }
+ 
+@@ -53,3 +65,11 @@ func (a *TransportAdapter) Tag() string {
+ func (a *TransportAdapter) Dependencies() []string {
+ 	return a.dependencies
+ }
++
++func (a *TransportAdapter) LegacyStrategy() C.DomainStrategy {
++	return a.strategy
++}
++
++func (a *TransportAdapter) LegacyClientSubnet() netip.Prefix {
++	return a.clientSubnet
++}
+diff --git a/dns/transport_dialer.go b/dns/transport_dialer.go
+index 971002a..d320c6d 100644
+--- a/dns/transport_dialer.go
++++ b/dns/transport_dialer.go
+@@ -10,17 +10,20 @@ import (
+ 
+ func NewLocalDialer(ctx context.Context, options option.LocalDNSServerOptions) (N.Dialer, error) {
+ 	return dialer.NewWithOptions(dialer.Options{
+-		Context:        ctx,
+-		Options:        options.DialerOptions,
+-		DirectResolver: true,
++		Context:                 ctx,
++		Options:                 options.DialerOptions,
++		DirectResolver:          true,
++		DisableEmptyDirectCheck: true,
+ 	})
+ }
+ 
+ func NewRemoteDialer(ctx context.Context, options option.RemoteDNSServerOptions) (N.Dialer, error) {
+ 	return dialer.NewWithOptions(dialer.Options{
+-		Context:        ctx,
+-		Options:        options.DialerOptions,
+-		RemoteIsDomain: options.ServerIsDomain(),
+-		DirectResolver: true,
++		Context:                 ctx,
++		Options:                 options.DialerOptions,
++		RemoteIsDomain:          options.ServerIsDomain(),
++		DirectResolver:          true,
++		DefaultOutbound:         options.LegacyDefaultDialer,
++		DisableEmptyDirectCheck: true,
+ 	})
+ }
+diff --git a/option/direct.go b/option/direct.go
+index a11c45e..490d645 100644
+--- a/option/direct.go
++++ b/option/direct.go
+@@ -3,7 +3,6 @@ package option
+ import (
+ 	"context"
+ 
+-	E "github.com/sagernet/sing/common/exceptions"
+ 	"github.com/sagernet/sing/common/json"
+ )
+ 
+@@ -27,13 +26,5 @@ type _DirectOutboundOptions struct {
+ type DirectOutboundOptions _DirectOutboundOptions
+ 
+ func (d *DirectOutboundOptions) UnmarshalJSONContext(ctx context.Context, content []byte) error {
+-	err := json.UnmarshalDisallowUnknownFields(content, (*_DirectOutboundOptions)(d))
+-	if err != nil {
+-		return err
+-	}
+-	//nolint:staticcheck
+-	if d.OverrideAddress != "" || d.OverridePort != 0 {
+-		return E.New("destination override fields in direct outbound are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, use route options instead")
+-	}
+-	return nil
++	return json.UnmarshalDisallowUnknownFields(content, (*_DirectOutboundOptions)(d))
+ }
+diff --git a/option/dns.go b/option/dns.go
+index 1180a62..09d5bfb 100644
+--- a/option/dns.go
++++ b/option/dns.go
+@@ -3,16 +3,21 @@ package option
+ import (
+ 	"context"
+ 	"net/netip"
++	"net/url"
+ 	"reflect"
+ 
+ 	C "github.com/sagernet/sing-box/constant"
++	"github.com/sagernet/sing-box/experimental/deprecated"
+ 	"github.com/sagernet/sing-box/schema"
++	"github.com/sagernet/sing/common"
+ 	E "github.com/sagernet/sing/common/exceptions"
+ 	"github.com/sagernet/sing/common/json"
+ 	"github.com/sagernet/sing/common/json/badjson"
+ 	"github.com/sagernet/sing/common/json/badoption"
+ 	M "github.com/sagernet/sing/common/metadata"
+ 	"github.com/sagernet/sing/service"
++
++	"github.com/miekg/dns"
+ )
+ 
+ type RawDNSOptions struct {
+@@ -23,29 +28,86 @@ type RawDNSOptions struct {
+ 	DNSClientOptions
+ }
+ 
++type LegacyDNSOptions struct {
++	FakeIP *LegacyDNSFakeIPOptions `json:"fakeip,omitempty"`
++}
++
+ type DNSOptions struct {
+ 	RawDNSOptions
++	LegacyDNSOptions
+ }
+ 
+-const (
+-	legacyDNSFakeIPRemovedMessage = "legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+-	legacyDNSServerRemovedMessage = "legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+-)
++type LegacyDNSFakeIPOptions struct {
++	Enabled    bool              `json:"enabled,omitempty"`
++	Inet4Range *badoption.Prefix `json:"inet4_range,omitempty"`
++	Inet6Range *badoption.Prefix `json:"inet6_range,omitempty"`
++}
++
++type contextKeyDontUpgrade struct{}
++
++func ContextWithDontUpgrade(ctx context.Context) context.Context {
++	return context.WithValue(ctx, (*contextKeyDontUpgrade)(nil), true)
++}
+ 
+-type removedLegacyDNSOptions struct {
+-	FakeIP json.RawMessage `json:"fakeip,omitempty"`
++func dontUpgradeFromContext(ctx context.Context) bool {
++	return ctx.Value((*contextKeyDontUpgrade)(nil)) == true
+ }
+ 
+ func (o *DNSOptions) UnmarshalJSONContext(ctx context.Context, content []byte) error {
+-	var legacyOptions removedLegacyDNSOptions
+-	err := json.UnmarshalContext(ctx, content, &legacyOptions)
++	err := json.UnmarshalContext(ctx, content, &o.LegacyDNSOptions)
+ 	if err != nil {
+ 		return err
+ 	}
+-	if len(legacyOptions.FakeIP) != 0 {
+-		return E.New(legacyDNSFakeIPRemovedMessage)
++	dontUpgrade := dontUpgradeFromContext(ctx)
++	legacyOptions := o.LegacyDNSOptions
++	if !dontUpgrade {
++		if o.FakeIP != nil && o.FakeIP.Enabled {
++			deprecated.Report(ctx, deprecated.OptionLegacyDNSFakeIPOptions)
++			ctx = context.WithValue(ctx, (*LegacyDNSFakeIPOptions)(nil), o.FakeIP)
++		}
++		o.LegacyDNSOptions = LegacyDNSOptions{}
++	}
++	err = badjson.UnmarshallExcludedContext(ctx, content, legacyOptions, &o.RawDNSOptions)
++	if err != nil {
++		return err
++	}
++	if !dontUpgrade {
++		rcodeMap := make(map[string]int)
++		o.Servers = common.Filter(o.Servers, func(it DNSServerOptions) bool {
++			if it.Type == C.DNSTypeLegacyRcode {
++				rcodeMap[it.Tag] = it.Options.(int)
++				return false
++			}
++			return true
++		})
++		if len(rcodeMap) > 0 {
++			for i := 0; i < len(o.Rules); i++ {
++				rewriteRcode(rcodeMap, &o.Rules[i])
++			}
++		}
++	}
++	return nil
++}
++
++func rewriteRcode(rcodeMap map[string]int, rule *DNSRule) {
++	switch rule.Type {
++	case "", C.RuleTypeDefault:
++		rewriteRcodeAction(rcodeMap, &rule.DefaultOptions.DNSRuleAction)
++	case C.RuleTypeLogical:
++		rewriteRcodeAction(rcodeMap, &rule.LogicalOptions.DNSRuleAction)
++	}
++}
++
++func rewriteRcodeAction(rcodeMap map[string]int, ruleAction *DNSRuleAction) {
++	if ruleAction.Action != "" && ruleAction.Action != C.RuleActionTypeRoute {
++		return
++	}
++	rcode, loaded := rcodeMap[ruleAction.RouteOptions.Server]
++	if !loaded {
++		return
+ 	}
+-	return badjson.UnmarshallExcludedContext(ctx, content, legacyOptions, &o.RawDNSOptions)
++	ruleAction.Action = C.RuleActionTypePredefined
++	ruleAction.PredefinedOptions.Rcode = common.Ptr(DNSRCode(rcode))
+ }
+ 
+ func (o DNSOptions) DescribeSchema(builder schema.Builder) (*schema.Node, error) {
+@@ -114,6 +176,10 @@ type _DNSServerOptions struct {
+ type DNSServerOptions _DNSServerOptions
+ 
+ func (o *DNSServerOptions) MarshalJSONContext(ctx context.Context) ([]byte, error) {
++	switch o.Type {
++	case C.DNSTypeLegacy:
++		o.Type = ""
++	}
+ 	return badjson.MarshallObjectsContext(ctx, (*_DNSServerOptions)(o), o.Options)
+ }
+ 
+@@ -129,7 +195,9 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
+ 	var options any
+ 	switch o.Type {
+ 	case "", C.DNSTypeLegacy:
+-		return E.New(legacyDNSServerRemovedMessage)
++		o.Type = C.DNSTypeLegacy
++		options = new(LegacyDNSServerOptions)
++		deprecated.Report(ctx, deprecated.OptionLegacyDNSTransport)
+ 	default:
+ 		var loaded bool
+ 		options, loaded = registry.CreateOptions(o.Type)
+@@ -142,6 +210,179 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
+ 		return err
+ 	}
+ 	o.Options = options
++	if o.Type == C.DNSTypeLegacy && !dontUpgradeFromContext(ctx) {
++		err = o.Upgrade(ctx)
++		if err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++func (o *DNSServerOptions) Upgrade(ctx context.Context) error {
++	if o.Type != C.DNSTypeLegacy {
++		return nil
++	}
++	options := o.Options.(*LegacyDNSServerOptions)
++	serverURL, _ := url.Parse(options.Address)
++	var serverType string
++	if serverURL != nil && serverURL.Scheme != "" {
++		serverType = serverURL.Scheme
++	} else {
++		switch options.Address {
++		case "local", "fakeip":
++			serverType = options.Address
++		default:
++			serverType = C.DNSTypeUDP
++		}
++	}
++	var domainResolver *DomainResolveOptions
++	if options.AddressResolver != "" {
++		domainResolver = &DomainResolveOptions{
++			Server:   options.AddressResolver,
++			Strategy: options.AddressStrategy,
++		}
++	}
++	remoteOptions := RemoteDNSServerOptions{
++		RawLocalDNSServerOptions: RawLocalDNSServerOptions{
++			DialerOptions: DialerOptions{
++				Detour: options.Detour,
++				AbstractDialerOptions: AbstractDialerOptions{
++					DomainResolver: domainResolver,
++					FallbackDelay:  options.AddressFallbackDelay,
++				},
++			},
++			Legacy:              true,
++			LegacyStrategy:      options.Strategy,
++			LegacyDefaultDialer: options.Detour == "",
++			LegacyClientSubnet:  options.ClientSubnet.Build(netip.Prefix{}),
++		},
++	}
++	switch serverType {
++	case C.DNSTypeLocal:
++		o.Type = C.DNSTypeLocal
++		remoteOptions.LegacyDefaultDialer = false
++		o.Options = &LocalDNSServerOptions{
++			RawLocalDNSServerOptions: remoteOptions.RawLocalDNSServerOptions,
++		}
++	case C.DNSTypeUDP:
++		o.Type = C.DNSTypeUDP
++		o.Options = &remoteOptions
++		var serverAddr M.Socksaddr
++		if serverURL == nil || serverURL.Scheme == "" {
++			serverAddr = M.ParseSocksaddr(options.Address)
++		} else {
++			serverAddr = M.ParseSocksaddr(serverURL.Host)
++		}
++		if !serverAddr.IsValid() {
++			return E.New("invalid server address")
++		}
++		remoteOptions.Server = serverAddr.AddrString()
++		if serverAddr.Port != 0 && serverAddr.Port != 53 {
++			remoteOptions.ServerPort = serverAddr.Port
++		}
++	case C.DNSTypeTCP:
++		o.Type = C.DNSTypeTCP
++		o.Options = &remoteOptions
++		if serverURL == nil {
++			return E.New("invalid server address")
++		}
++		serverAddr := M.ParseSocksaddr(serverURL.Host)
++		if !serverAddr.IsValid() {
++			return E.New("invalid server address")
++		}
++		remoteOptions.Server = serverAddr.AddrString()
++		if serverAddr.Port != 0 && serverAddr.Port != 53 {
++			remoteOptions.ServerPort = serverAddr.Port
++		}
++	case C.DNSTypeTLS, C.DNSTypeQUIC:
++		o.Type = serverType
++		if serverURL == nil {
++			return E.New("invalid server address")
++		}
++		serverAddr := M.ParseSocksaddr(serverURL.Host)
++		if !serverAddr.IsValid() {
++			return E.New("invalid server address")
++		}
++		remoteOptions.Server = serverAddr.AddrString()
++		if serverAddr.Port != 0 && serverAddr.Port != 853 {
++			remoteOptions.ServerPort = serverAddr.Port
++		}
++		o.Options = &RemoteTLSDNSServerOptions{
++			RemoteDNSServerOptions: remoteOptions,
++		}
++	case C.DNSTypeHTTPS, C.DNSTypeHTTP3:
++		o.Type = serverType
++		httpsOptions := RemoteHTTPSDNSServerOptions{
++			RemoteTLSDNSServerOptions: RemoteTLSDNSServerOptions{
++				RemoteDNSServerOptions: remoteOptions,
++			},
++		}
++		o.Options = &httpsOptions
++		if serverURL == nil {
++			return E.New("invalid server address")
++		}
++		serverAddr := M.ParseSocksaddr(serverURL.Host)
++		if !serverAddr.IsValid() {
++			return E.New("invalid server address")
++		}
++		httpsOptions.Server = serverAddr.AddrString()
++		if serverAddr.Port != 0 && serverAddr.Port != 443 {
++			httpsOptions.ServerPort = serverAddr.Port
++		}
++		if serverURL.Path != "/dns-query" {
++			httpsOptions.Path = serverURL.Path
++		}
++	case "rcode":
++		var rcode int
++		if serverURL == nil {
++			return E.New("invalid server address")
++		}
++		switch serverURL.Host {
++		case "success":
++			rcode = dns.RcodeSuccess
++		case "format_error":
++			rcode = dns.RcodeFormatError
++		case "server_failure":
++			rcode = dns.RcodeServerFailure
++		case "name_error":
++			rcode = dns.RcodeNameError
++		case "not_implemented":
++			rcode = dns.RcodeNotImplemented
++		case "refused":
++			rcode = dns.RcodeRefused
++		default:
++			return E.New("unknown rcode: ", serverURL.Host)
++		}
++		o.Type = C.DNSTypeLegacyRcode
++		o.Options = rcode
++	case C.DNSTypeDHCP:
++		o.Type = C.DNSTypeDHCP
++		dhcpOptions := DHCPDNSServerOptions{}
++		if serverURL == nil {
++			return E.New("invalid server address")
++		}
++		if serverURL.Host != "" && serverURL.Host != "auto" {
++			dhcpOptions.Interface = serverURL.Host
++		}
++		o.Options = &dhcpOptions
++	case C.DNSTypeFakeIP:
++		o.Type = C.DNSTypeFakeIP
++		fakeipOptions := FakeIPDNSServerOptions{}
++		if legacyOptions, loaded := ctx.Value((*LegacyDNSFakeIPOptions)(nil)).(*LegacyDNSFakeIPOptions); loaded {
++			fakeipOptions.Inet4Range = legacyOptions.Inet4Range
++			fakeipOptions.Inet6Range = legacyOptions.Inet6Range
++		}
++		if fakeipOptions.Inet4Range == nil && fakeipOptions.Inet6Range == nil {
++			prefix4 := badoption.Prefix(netip.MustParsePrefix("198.18.0.0/15"))
++			prefix6 := badoption.Prefix(netip.MustParsePrefix("fc00::/18"))
++			fakeipOptions.Inet4Range = &prefix4
++			fakeipOptions.Inet6Range = &prefix6
++		}
++		o.Options = &fakeipOptions
++	default:
++		return E.New("unsupported DNS server scheme: ", serverType)
++	}
+ 	return nil
+ }
+ 
+@@ -176,6 +417,16 @@ func (o *DNSServerAddressOptions) ReplaceServerOptions(options ServerOptions) {
+ 	*o = DNSServerAddressOptions(options)
+ }
+ 
++type LegacyDNSServerOptions struct {
++	Address              string                `json:"address"`
++	AddressResolver      string                `json:"address_resolver,omitempty"`
++	AddressStrategy      DomainStrategy        `json:"address_strategy,omitempty"`
++	AddressFallbackDelay badoption.Duration    `json:"address_fallback_delay,omitempty"`
++	Strategy             DomainStrategy        `json:"strategy,omitempty"`
++	Detour               string                `json:"detour,omitempty"`
++	ClientSubnet         *badoption.Prefixable `json:"client_subnet,omitempty"`
++}
++
+ type HostsDNSServerOptions struct {
+ 	Path       badoption.Listable[string]                                `json:"path,omitempty"`
+ 	Predefined *badjson.TypedMap[string, badoption.Listable[netip.Addr]] `json:"predefined,omitempty"`
+@@ -183,6 +434,10 @@ type HostsDNSServerOptions struct {
+ 
+ type RawLocalDNSServerOptions struct {
+ 	DialerOptions
++	Legacy              bool           `json:"-"`
++	LegacyStrategy      DomainStrategy `json:"-"`
++	LegacyDefaultDialer bool           `json:"-"`
++	LegacyClientSubnet  netip.Prefix   `json:"-"`
+ }
+ 
+ type LocalDNSServerOptions struct {
+diff --git a/option/inbound.go b/option/inbound.go
+index 7bca565..74291da 100644
+--- a/option/inbound.go
++++ b/option/inbound.go
+@@ -47,12 +47,6 @@ func (h *Inbound) UnmarshalJSONContext(ctx context.Context, content []byte) erro
+ 	if err != nil {
+ 		return err
+ 	}
+-	if listenWrapper, isListen := options.(ListenOptionsWrapper); isListen {
+-		//nolint:staticcheck
+-		if listenWrapper.TakeListenOptions().InboundOptions != (InboundOptions{}) {
+-			return E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
+-		}
+-	}
+ 	h.Options = options
+ 	return nil
+ }
+diff --git a/option/outbound.go b/option/outbound.go
+index 4590b48..86d85bb 100644
+--- a/option/outbound.go
++++ b/option/outbound.go
+@@ -40,24 +40,21 @@ func (h *Outbound) UnmarshalJSONContext(ctx context.Context, content []byte) err
+ 	if registry == nil {
+ 		return E.New("missing outbound options registry in context")
+ 	}
++	var options any
+ 	switch h.Type {
+ 	case C.TypeDNS:
+-		return E.New("dns outbound is deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, use rule actions instead")
+-	}
+-	options, loaded := registry.CreateOptions(h.Type)
+-	if !loaded {
+-		return E.New("unknown outbound type: ", h.Type)
++		options = new(StubOptions)
++	default:
++		var loaded bool
++		options, loaded = registry.CreateOptions(h.Type)
++		if !loaded {
++			return E.New("unknown outbound type: ", h.Type)
++		}
+ 	}
+ 	err = badjson.UnmarshallExcludedContext(ctx, content, (*_Outbound)(h), options)
+ 	if err != nil {
+ 		return err
+ 	}
+-	if listenWrapper, isListen := options.(ListenOptionsWrapper); isListen {
+-		//nolint:staticcheck
+-		if listenWrapper.TakeListenOptions().InboundOptions != (InboundOptions{}) {
+-			return E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, use rule actions instead")
+-		}
+-	}
+ 	h.Options = options
+ 	return nil
+ }
+diff --git a/option/rule_action.go b/option/rule_action.go
+index ae05200..1a2e5d2 100644
+--- a/option/rule_action.go
++++ b/option/rule_action.go
+@@ -323,8 +323,9 @@ func (r *RejectActionOptions) UnmarshalJSON(bytes []byte) error {
+ }
+ 
+ type RouteActionSniff struct {
+-	Sniffer badoption.Listable[string] `json:"sniffer,omitempty" enum:"tls,http,quic,dns,stun,bittorrent,dtls,ssh,rdp,ntp"`
+-	Timeout badoption.Duration         `json:"timeout,omitempty"`
++	Sniffer             badoption.Listable[string] `json:"sniffer,omitempty" enum:"tls,http,quic,dns,stun,bittorrent,dtls,ssh,rdp,ntp"`
++	Timeout             badoption.Duration         `json:"timeout,omitempty"`
++	OverrideDestination bool                       `json:"override_destination,omitempty" schema:"omit"`
+ }
+ 
+ type RouteActionResolve struct {
+diff --git a/option/wireguard.go b/option/wireguard.go
+index d25d0d2..f006141 100644
+--- a/option/wireguard.go
++++ b/option/wireguard.go
+@@ -31,3 +31,28 @@ type WireGuardPeer struct {
+ 	PersistentKeepaliveInterval uint16                           `json:"persistent_keepalive_interval,omitempty"`
+ 	Reserved                    []uint8                          `json:"reserved,omitempty"`
+ }
++
++type LegacyWireGuardOutboundOptions struct {
++	DialerOptions
++	SystemInterface bool                             `json:"system_interface,omitempty"`
++	GSO             bool                             `json:"gso,omitempty"`
++	InterfaceName   string                           `json:"interface_name,omitempty"`
++	LocalAddress    badoption.Listable[netip.Prefix] `json:"local_address"`
++	PrivateKey      string                           `json:"private_key"`
++	Peers           []LegacyWireGuardPeer            `json:"peers,omitempty"`
++	ServerOptions
++	PeerPublicKey string      `json:"peer_public_key"`
++	PreSharedKey  string      `json:"pre_shared_key,omitempty"`
++	Reserved      []uint8     `json:"reserved,omitempty"`
++	Workers       int         `json:"workers,omitempty"`
++	MTU           uint32      `json:"mtu,omitempty"`
++	Network       NetworkList `json:"network,omitempty"`
++}
++
++type LegacyWireGuardPeer struct {
++	ServerOptions
++	PublicKey    string                           `json:"public_key,omitempty"`
++	PreSharedKey string                           `json:"pre_shared_key,omitempty"`
++	AllowedIPs   badoption.Listable[netip.Prefix] `json:"allowed_ips,omitempty"`
++	Reserved     []uint8                          `json:"reserved,omitempty"`
++}
+diff --git a/protocol/tun/inbound.go b/protocol/tun/inbound.go
+index 22172e5..7f4415e 100644
+--- a/protocol/tun/inbound.go
++++ b/protocol/tun/inbound.go
+@@ -63,18 +63,28 @@ type Inbound struct {
+ 
+ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TunInboundOptions) (adapter.Inbound, error) {
+ 	//nolint:staticcheck
+-	if len(options.Inet4Address) > 0 || len(options.Inet6Address) > 0 ||
+-		len(options.Inet4RouteAddress) > 0 || len(options.Inet6RouteAddress) > 0 ||
+-		len(options.Inet4RouteExcludeAddress) > 0 || len(options.Inet6RouteExcludeAddress) > 0 {
+-		return nil, E.New("legacy tun address fields are deprecated in sing-box 1.10.0 and removed in sing-box 1.12.0")
++	if len(options.Inet4Address) > 0 {
++		options.Address = append(options.Address, options.Inet4Address...)
+ 	}
+ 	//nolint:staticcheck
+-	if options.GSO {
+-		return nil, E.New("GSO option in tun is deprecated in sing-box 1.11.0 and removed in sing-box 1.12.0")
++	if len(options.Inet6Address) > 0 {
++		options.Address = append(options.Address, options.Inet6Address...)
+ 	}
+ 	//nolint:staticcheck
+-	if options.InboundOptions != (option.InboundOptions{}) {
+-		return nil, E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
++	if len(options.Inet4RouteAddress) > 0 {
++		options.RouteAddress = append(options.RouteAddress, options.Inet4RouteAddress...)
++	}
++	//nolint:staticcheck
++	if len(options.Inet6RouteAddress) > 0 {
++		options.RouteAddress = append(options.RouteAddress, options.Inet6RouteAddress...)
++	}
++	//nolint:staticcheck
++	if len(options.Inet4RouteExcludeAddress) > 0 {
++		options.RouteExcludeAddress = append(options.RouteExcludeAddress, options.Inet4RouteExcludeAddress...)
++	}
++	//nolint:staticcheck
++	if len(options.Inet6RouteExcludeAddress) > 0 {
++		options.RouteExcludeAddress = append(options.RouteExcludeAddress, options.Inet6RouteExcludeAddress...)
+ 	}
+ 
+ 	address := options.Address
+diff --git a/protocol/wireguard/endpoint.go b/protocol/wireguard/endpoint.go
+index 27e7345..af8a6ae 100644
+--- a/protocol/wireguard/endpoint.go
++++ b/protocol/wireguard/endpoint.go
+@@ -10,6 +10,7 @@ import (
+ 
+ 	"github.com/sagernet/sing-box/adapter"
+ 	"github.com/sagernet/sing-box/adapter/endpoint"
++	"github.com/sagernet/sing-box/adapter/outbound"
+ 	"github.com/sagernet/sing-box/common/dialer"
+ 	"github.com/sagernet/sing-box/common/iponly"
+ 	C "github.com/sagernet/sing-box/constant"
+@@ -36,6 +37,43 @@ func RegisterEndpoint(registry *endpoint.Registry) {
+ 	endpoint.Register[option.WireGuardEndpointOptions](registry, C.TypeWireGuard, NewEndpoint)
+ }
+ 
++func RegisterOutbound(registry *outbound.Registry) {
++	outbound.Register[option.LegacyWireGuardOutboundOptions](registry, C.TypeWireGuard, NewOutbound)
++}
++
++func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.LegacyWireGuardOutboundOptions) (adapter.Outbound, error) {
++	peers := common.Map(options.Peers, func(it option.LegacyWireGuardPeer) option.WireGuardPeer {
++		return option.WireGuardPeer{
++			Address:      it.Server,
++			Port:         it.ServerPort,
++			PublicKey:    it.PublicKey,
++			PreSharedKey: it.PreSharedKey,
++			AllowedIPs:   it.AllowedIPs,
++			Reserved:     it.Reserved,
++		}
++	})
++	if len(peers) == 0 {
++		peers = []option.WireGuardPeer{{
++			Address:      options.Server,
++			Port:         options.ServerPort,
++			PublicKey:    options.PeerPublicKey,
++			PreSharedKey: options.PreSharedKey,
++			AllowedIPs:   []netip.Prefix{netip.PrefixFrom(netip.IPv4Unspecified(), 0), netip.PrefixFrom(netip.IPv6Unspecified(), 0)},
++			Reserved:     options.Reserved,
++		}}
++	}
++	return NewEndpoint(ctx, router, logger, tag, option.WireGuardEndpointOptions{
++		System:        options.SystemInterface,
++		Name:          options.InterfaceName,
++		MTU:           options.MTU,
++		Address:       options.LocalAddress,
++		PrivateKey:    options.PrivateKey,
++		Peers:         peers,
++		Workers:       options.Workers,
++		DialerOptions: options.DialerOptions,
++	})
++}
++
+ type Endpoint struct {
+ 	endpoint.Adapter
+ 	ctx            context.Context
+@@ -113,7 +151,11 @@ func NewEndpoint(ctx context.Context, router adapter.Router, logger log.ContextL
+ 		PrivateKey: options.PrivateKey,
+ 		ListenPort: options.ListenPort,
+ 		ResolvePeer: func(domain string) ([]netip.Addr, error) {
+-			return ep.dnsRouter.Lookup(ctx, domain, outboundDialer.(dialer.ResolveDialer).QueryOptions())
++			var queryOptions adapter.DNSQueryOptions
++			if resolveDialer, isResolve := outboundDialer.(dialer.ResolveDialer); isResolve {
++				queryOptions = resolveDialer.QueryOptions()
++			}
++			return ep.dnsRouter.Lookup(ctx, domain, queryOptions)
+ 		},
+ 		Peers: common.Map(options.Peers, func(it option.WireGuardPeer) wireguard.PeerOptions {
+ 			return wireguard.PeerOptions{
+diff --git a/route/route.go b/route/route.go
+index 93a0022..d62c22a 100644
+--- a/route/route.go
++++ b/route/route.go
+@@ -489,6 +489,9 @@ func (r *Router) preMatchFlow(ctx context.Context, metadata *adapter.InboundCont
+ 		if !metadata.FakeIP {
+ 			return continueResult
+ 		}
++		if len(metadata.DestinationAddresses) == 0 {
++			_ = r.actionResolve(adapter.WithContext(ctx, metadata), metadata, &R.RuleActionResolve{})
++		}
+ 		var newDestination netip.Addr
+ 		for _, address := range metadata.DestinationAddresses {
+ 			if address.Is4() == packetDestination.IsIPv4() {
+diff --git a/route/rule/rule_action.go b/route/rule/rule_action.go
+index cb65611..b5d6638 100644
+--- a/route/rule/rule_action.go
++++ b/route/rule/rule_action.go
+@@ -105,8 +105,9 @@ func NewRuleAction(ctx context.Context, logger logger.ContextLogger, action opti
+ 		return &RuleActionHijackDNS{}, nil
+ 	case C.RuleActionTypeSniff:
+ 		sniffAction := &RuleActionSniff{
+-			SnifferNames: action.SniffOptions.Sniffer,
+-			Timeout:      time.Duration(action.SniffOptions.Timeout),
++			SnifferNames:        action.SniffOptions.Sniffer,
++			Timeout:             time.Duration(action.SniffOptions.Timeout),
++			OverrideDestination: action.SniffOptions.OverrideDestination,
+ 		}
+ 		return sniffAction, sniffAction.build()
+ 	case C.RuleActionTypeResolve:
