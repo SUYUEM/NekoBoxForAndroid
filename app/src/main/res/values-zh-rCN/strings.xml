@@ -527,4 +527,36 @@
     <string name="minimize">最小化</string>
     <string name="app_list_permission_denied">无法读取已安装的应用。\n这通常是由于系统限制了应用的读取权限（例如某些中国厂商系统）。\n请在系统设置中授予权限。</string>
     <string name="open_app_settings">打开系统设置</string>
+
+    <!-- FlClash UI Strings -->
+    <string name="tab_dashboard">概览</string>
+    <string name="tab_proxies">代理</string>
+    <string name="tab_profiles">配置</string>
+    <string name="tab_rules">路由</string>
+    <string name="tab_settings">设置</string>
+    <string name="dashboard_core_tag">sing-box 1.14.0</string>
+    <string name="dashboard_status_connected">已连接</string>
+    <string name="dashboard_status_disconnected">未连接</string>
+    <string name="dashboard_status_connecting">正在连接...</string>
+    <string name="dashboard_status_stopping">正在断开...</string>
+    <string name="dashboard_action_connect">点击启动连接</string>
+    <string name="dashboard_action_disconnect">点击断开连接</string>
+    <string name="dashboard_upload_speed">实时上传</string>
+    <string name="dashboard_download_speed">实时下载</string>
+    <string name="dashboard_total_sent">总发送：%s</string>
+    <string name="dashboard_total_received">总接收：%s</string>
+    <string name="dashboard_mode_title">分流模式</string>
+    <string name="dashboard_mode_rule">规则分流</string>
+    <string name="dashboard_mode_global">全局代理</string>
+    <string name="dashboard_mode_direct">直连模式</string>
+    <string name="dashboard_active_proxy">当前活动代理</string>
+    <string name="dashboard_active_profile">当前活动配置</string>
+    <string name="dashboard_no_node">未选择节点</string>
+    <string name="dashboard_no_profile">默认配置</string>
+    <string name="dashboard_action_switch">切换</string>
+    <string name="dashboard_action_ping">测速</string>
+    <string name="dashboard_quick_tools">快捷功能</string>
+    <string name="dashboard_restart_core">重启内核</string>
+    <string name="dashboard_protected_hint">已安全保护全部网络流量</string>
+    <string name="dashboard_unprotected_hint">点击下方按钮启动代理服务</string>
 </resources>

@@ -13,89 +13,70 @@
         android:layout_height="match_parent"
         android:clipChildren="false">
 
-        <androidx.coordinatorlayout.widget.CoordinatorLayout
-            android:id="@+id/fragment_holder"
+        <!-- FlClash Main Layout: Content + Modern Bottom Navigation Bar -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <!-- We double trackThickness as half of it will be invisible -->
+            <androidx.coordinatorlayout.widget.CoordinatorLayout
+                android:id="@+id/fragment_holder"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottom_navigation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/colorBackground"
+                app:elevation="8dp"
+                app:itemIconTint="@color/bottom_nav_color"
+                app:itemTextColor="@color/bottom_nav_color"
+                app:labelVisibilityMode="labeled"
+                app:menu="@menu/bottom_nav_menu" />
+
+        </LinearLayout>
+
+        <!-- Hidden legacy views for safe backward compatibility -->
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/fabProgress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:max="1"
-            android:visibility="invisible"
-            app:indicatorColor="?colorMaterial100"
-            app:layout_anchor="@+id/fab"
-            app:layout_anchorGravity="center"
-            app:layout_behavior="io.nekohasekai.sagernet.widget.FabProgressBehavior"
-            app:trackCornerRadius="@dimen/mtrl_progress_track_thickness"
-            app:trackThickness="8dp" />
+            android:visibility="gone" />
 
         <io.nekohasekai.sagernet.widget.ServiceButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:elevation="6dp"
-            android:nextFocusDown="@+id/stats"
-            app:backgroundTint="?fabColorBackground"
-            app:layout_anchor="@id/stats"
-            app:pressedTranslationZ="6dp"
-            app:srcCompat="@drawable/ic_service_idle" />
+            android:visibility="gone" />
 
         <io.nekohasekai.sagernet.widget.StatsBar
             android:id="@+id/stats"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:nextFocusUp="@+id/fab"
-            app:backgroundTint="?colorMaterial300"
-            app:contentInsetStart="0dp"
-            app:hideOnScroll="true"
-            app:layout_scrollFlags="enterAlways|scroll">
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tx"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:ellipsize="marquee"
-                    android:singleLine="true"
-                    android:textColor="?whiteOrTextPrimary"
-                    android:textSize="14sp" />
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/rx"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:ellipsize="marquee"
-                    android:singleLine="true"
-                    android:textColor="?whiteOrTextPrimary"
-                    android:textSize="14sp" />
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/status"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="fill_horizontal"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="?whiteOrTextPrimary"
-                    android:textSize="16sp"
-                    tools:text="@string/connection_test_available" />
-
+                    android:layout_height="wrap_content" />
             </LinearLayout>
-
         </io.nekohasekai.sagernet.widget.StatsBar>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
@@ -116,9 +97,8 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:visibility="gone"
         app:itemIconTint="@color/navigation_icon"
-        app:itemShapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
-        app:itemShapeFillColor="@color/navigation_item"
         app:itemTextColor="@color/navigation_icon"
         app:menu="@menu/main_drawer_menu" />
 

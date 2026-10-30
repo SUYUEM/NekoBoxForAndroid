@@ -437,4 +437,36 @@
     <string name="backup_summary">如果路由規則不與設定檔一起備份，則自訂出站將丟失。</string>
     <string name="backup_not_file">不是一個備份檔案，預計 .json，但 %s</string>
     <string name="packet_encoding">封包編碼</string>
+
+    <!-- FlClash UI Strings -->
+    <string name="tab_dashboard">概覽</string>
+    <string name="tab_proxies">代理</string>
+    <string name="tab_profiles">配置</string>
+    <string name="tab_rules">路由</string>
+    <string name="tab_settings">設定</string>
+    <string name="dashboard_core_tag">sing-box 1.14.0</string>
+    <string name="dashboard_status_connected">已連接</string>
+    <string name="dashboard_status_disconnected">未連接</string>
+    <string name="dashboard_status_connecting">正在連接...</string>
+    <string name="dashboard_status_stopping">正在斷開...</string>
+    <string name="dashboard_action_connect">點擊啟動連接</string>
+    <string name="dashboard_action_disconnect">點擊斷開連接</string>
+    <string name="dashboard_upload_speed">即時上傳</string>
+    <string name="dashboard_download_speed">即時下載</string>
+    <string name="dashboard_total_sent">總發送：%s</string>
+    <string name="dashboard_total_received">總接收：%s</string>
+    <string name="dashboard_mode_title">分流模式</string>
+    <string name="dashboard_mode_rule">規則分流</string>
+    <string name="dashboard_mode_global">全局代理</string>
+    <string name="dashboard_mode_direct">直連模式</string>
+    <string name="dashboard_active_proxy">當前活動代理</string>
+    <string name="dashboard_active_profile">當前活動配置</string>
+    <string name="dashboard_no_node">未選擇節點</string>
+    <string name="dashboard_no_profile">默認配置</string>
+    <string name="dashboard_action_switch">切換</string>
+    <string name="dashboard_action_ping">測速</string>
+    <string name="dashboard_quick_tools">快捷功能</string>
+    <string name="dashboard_restart_core">重啟內核</string>
+    <string name="dashboard_protected_hint">已安全保護全部網路流量</string>
+    <string name="dashboard_unprotected_hint">點擊下方按鈕啟動代理服務</string>
 </resources>

@@ -68,14 +68,18 @@ class MainActivity : ThemedActivity(),
         binding.drawerLayout.removeView(binding.navViewBlack)
         navigation.setNavigationItemSelectedListener(this)
 
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            displayFragmentWithId(item.itemId)
+        }
+
         if (savedInstanceState == null) {
-            displayFragmentWithId(R.id.nav_configuration)
+            displayFragmentWithId(R.id.nav_dashboard)
         }
         onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is DashboardFragment) {
                 moveTaskToBack(true)
             } else {
-                displayFragmentWithId(R.id.nav_configuration)
+                displayFragmentWithId(R.id.nav_dashboard)
             }
         }
 
@@ -359,14 +363,9 @@ class MainActivity : ThemedActivity(),
 
     @SuppressLint("CommitTransaction")
     fun displayFragment(fragment: ToolbarFragment) {
-        if (fragment is ConfigurationFragment) {
-            binding.stats.allowShow = true
-            binding.fab.show()
-        } else if (!DataStore.showBottomBar) {
-            binding.stats.allowShow = false
-            binding.stats.performHide()
-            binding.fab.hide()
-        }
+        binding.stats.allowShow = false
+        binding.stats.performHide()
+        binding.fab.hide()
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_holder, fragment)
             .commitAllowingStateLoss()
@@ -375,10 +374,8 @@ class MainActivity : ThemedActivity(),
 
     fun displayFragmentWithId(@IdRes id: Int): Boolean {
         when (id) {
-            R.id.nav_configuration -> {
-                displayFragment(ConfigurationFragment())
-            }
-
+            R.id.nav_dashboard -> displayFragment(DashboardFragment())
+            R.id.nav_configuration -> displayFragment(ConfigurationFragment())
             R.id.nav_group -> displayFragment(GroupFragment())
             R.id.nav_route -> displayFragment(RouteFragment())
             R.id.nav_settings -> displayFragment(SettingsFragment())
@@ -398,7 +395,8 @@ class MainActivity : ThemedActivity(),
 
             else -> return false
         }
-        navigation.menu.findItem(id).isChecked = true
+        navigation.menu.findItem(id)?.isChecked = true
+        binding.bottomNavigation.menu.findItem(id)?.isChecked = true
         return true
     }
 
@@ -411,6 +409,7 @@ class MainActivity : ThemedActivity(),
 
         binding.fab.changeState(state, DataStore.serviceState, animate)
         binding.stats.changeState(state)
+        (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? DashboardFragment)?.changeState(state)
         if (msg != null) snackbar(getString(R.string.vpn_error, msg)).show()
     }
 
@@ -442,7 +441,7 @@ class MainActivity : ThemedActivity(),
         connection.connect(this, this)
     }
 
-    private val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
+    internal val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
         if (it) snackbar(R.string.vpn_permission_denied).show()
     }
 
@@ -450,6 +449,9 @@ class MainActivity : ThemedActivity(),
     // ONLY do UI update here, write DB in bg process
     override fun cbSpeedUpdate(stats: SpeedDisplayData) {
         binding.stats.updateSpeed(stats.txRateProxy, stats.rxRateProxy)
+        (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? DashboardFragment)?.updateSpeed(
+            stats.txRateProxy, stats.rxRateProxy
+        )
     }
 
     override fun cbTrafficUpdate(data: TrafficData) {
