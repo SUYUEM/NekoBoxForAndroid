@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_dashboard"
-        android:icon="@drawable/ic_baseline_home_24"
-        android:title="@string/tab_dashboard" />
+        android:icon="@drawable/ic_fl_dashboard"
+        android:title="仪表盘" />
     <item
         android:id="@+id/nav_configuration"
-        android:icon="@drawable/ic_action_dns"
-        android:title="@string/tab_proxies" />
+        android:icon="@drawable/baseline_public_24"
+        android:title="代理" />
     <item
         android:id="@+id/nav_group"
-        android:icon="@drawable/ic_baseline_view_list_24"
-        android:title="@string/tab_profiles" />
+        android:icon="@drawable/ic_fl_document"
+        android:title="配置" />
     <item
-        android:id="@+id/nav_route"
-        android:icon="@drawable/ic_maps_directions"
-        android:title="@string/tab_rules" />
-    <item
-        android:id="@+id/nav_settings"
-        android:icon="@drawable/ic_action_settings"
-        android:title="@string/tab_settings" />
+        android:id="@+id/nav_tools"
+        android:icon="@drawable/ic_fl_toolbox"
+        android:title="工具" />
 </menu>

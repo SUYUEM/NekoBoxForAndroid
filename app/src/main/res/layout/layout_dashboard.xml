@@ -4,37 +4,286 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fl_bg_light"
     android:orientation="vertical">
 
-    <include
-        layout="@layout/layout_appbar"
+    <!-- Hidden toolbar for ToolbarFragment base class compatibility -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <!-- FlClash Top Header: Large Title + Circular Edit Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="仪表盘"
+            android:textColor="@color/fl_text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_dashboard_edit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@string/edit"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_image_edit"
+            app:tint="@color/fl_text_primary" />
+
+    </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false"
         android:fillViewport="true"
-        android:overScrollMode="never">
+        android:overScrollMode="never"
+        android:paddingBottom="92dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="14dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="24dp">
+            android:paddingTop="4dp"
+            android:paddingBottom="16dp">
 
-            <!-- 1. FlClash Core Connection Card -->
+            <!-- 1. 状态 (Status Card) -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_connection"
+                android:id="@+id/card_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#1A00A389"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Row 1: Pulse icon + 状态 + Status Pill -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_fl_pulse"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="状态"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_status_badge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_pill_neutral"
+                            android:paddingHorizontal="9dp"
+                            android:paddingVertical="2dp"
+                            android:text="未运行"
+                            android:textColor="@color/fl_pill_neutral_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Row 2: Scalloped Country Badge + IP & IPv4/IPv6 Pills + Big Play/Stop FAB -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/bg_fl_scallop_badge">
+
+                            <TextView
+                                android:id="@+id/tv_country_code"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="CN"
+                                android:textColor="@color/theme_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:id="@+id/layout_ip_info"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tv_public_ip"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
+                                android:text="点击检测 IP"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="5dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tv_ipv4_badge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_badge_rounded"
+                                    android:paddingHorizontal="7dp"
+                                    android:paddingVertical="1.5dp"
+                                    android:text="IPv4"
+                                    android:textColor="@color/theme_primary"
+                                    android:textSize="10.5sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tv_ipv6_badge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_pill_fast"
+                                    android:paddingHorizontal="7dp"
+                                    android:paddingVertical="1.5dp"
+                                    android:text="IPv6"
+                                    android:textColor="@color/fl_pill_fast_text"
+                                    android:textSize="10.5sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- FlClash Circular Play/Stop Button -->
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/btn_connect_fab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:contentDescription="@string/connect"
+                            app:backgroundTint="@color/theme_primary"
+                            app:elevation="4dp"
+                            app:fabCustomSize="58dp"
+                            app:maxImageSize="26dp"
+                            app:srcCompat="@drawable/ic_fl_play"
+                            app:tint="@color/white" />
+
+                    </LinearLayout>
+
+                    <!-- Row 3: 运行时长 & 组织 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="运行时长"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tv_uptime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="—"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="13.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.4"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="组织"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tv_isp_org"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:ellipsize="end"
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
+                                android:text="sing-box 1.14.0"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="13.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 2. 网络速度 (Network Speed Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_speed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -49,439 +298,941 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <View
-                            android:id="@+id/status_dot"
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_status_dot" />
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_baseline_speed_24"
+                            app:tint="@color/fl_text_secondary" />
 
                         <TextView
-                            android:id="@+id/status_text"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_status_disconnected"
-                            android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:textColor="?android:attr/textColorPrimary"
+                            android:text="网络速度"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/core_tag_badge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_badge_rounded"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="3dp"
-                            android:text="@string/dashboard_core_tag"
-                            android:textColor="?colorPrimary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/status_subtext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="14dp"
-                        android:text="@string/dashboard_unprotected_hint"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:textColor="?android:attr/textColorSecondary" />
-
-                    <!-- Big FlClash Connect Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_connect"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:backgroundTint="?colorPrimary"
-                        android:text="@string/dashboard_action_connect"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        app:cornerRadius="26dp"
-                        app:elevation="3dp"
-                        app:icon="@drawable/ic_service_idle"
-                        app:iconGravity="textStart"
-                        app:iconPadding="10dp"
-                        app:iconSize="22dp"
-                        app:iconTint="@color/white" />
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 2. FlClash Iconic Real-Time Speed Gauges -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:orientation="horizontal">
-
-                <!-- Upload Speed Card -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_upload"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1.5dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="▲  实时上传"
-                            android:textColor="?colorPrimary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/text_upload_speed"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:fontFamily="sans-serif-medium"
-                            android:text="0.0 KB/s"
-                            android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/text_total_sent"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="总发送: 0 B"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Download Speed Card -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_download"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1.5dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="▼  实时下载"
-                            android:textColor="?colorAccent"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/text_download_speed"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:fontFamily="sans-serif-medium"
-                            android:text="0.0 KB/s"
-                            android:textColor="?android:attr/textColorPrimary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/text_total_received"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="总接收: 0 B"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-            <!-- 3. FlClash Routing Mode Selector -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="1.5dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/dashboard_mode_title"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/toggle_routing_mode"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:checkedButton="@+id/btn_mode_rule"
-                        app:selectionRequired="true"
-                        app:singleSelection="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_mode_rule"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_mode_rule"
-                            android:textSize="13sp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_mode_global"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_mode_global"
-                            android:textSize="13sp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_mode_direct"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_mode_direct"
-                            android:textSize="13sp" />
-
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 4. Active Proxy & Profile Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_active_proxy"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="1.5dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_active_proxy"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/active_profile_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dashboard_no_profile"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/active_node_protocol"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_badge_rounded"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="2dp"
-                            android:text="PROXY"
-                            android:textColor="?colorPrimary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/active_node_name"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="@string/dashboard_no_node"
-                            android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:textColor="?android:attr/textColorPrimary"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/active_node_ping"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_badge_rounded"
-                            android:paddingHorizontal="7dp"
-                            android:paddingVertical="2dp"
-                            android:text="-- ms"
-                            android:textColor="?colorPrimary"
-                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:gravity="end"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_ping_test"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="8dp"
-                            android:paddingHorizontal="12dp"
-                            android:text="@string/dashboard_action_ping"
-                            android:textSize="12sp"
-                            app:cornerRadius="18dp" />
+                        <!-- Upload Sub-Card -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_fl_subcard"
+                            android:orientation="vertical"
+                            android:padding="14dp">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_switch_node"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:backgroundTint="?colorPrimary"
-                            android:paddingHorizontal="14dp"
-                            android:text="@string/dashboard_action_switch"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            app:cornerRadius="18dp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="↑ 上传"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/text_upload_speed"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="0 B/s"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/text_total_sent"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="累计 0 B"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="11.5sp" />
+                        </LinearLayout>
+
+                        <!-- Download Sub-Card -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_fl_subcard"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="↓ 下载"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/text_download_speed"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="0 B/s"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/text_total_received"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="累计 0 B"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="11.5sp" />
+                        </LinearLayout>
+
                     </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 5. Quick Tools Card -->
+            <!-- 3. 出站模式 (Outbound Mode Card) -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_outbound_mode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="1.5dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:padding="16dp">
 
-                    <TextView
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_maps_directions"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="出站模式"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- 3-Segment Pill Selector with Top Icon + Bottom Text -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_fl_mode_track"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <!-- 规则 -->
+                        <LinearLayout
+                            android:id="@+id/mode_rule_container"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_fl_mode_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/icon_mode_rule"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                app:srcCompat="@drawable/ic_baseline_view_list_24"
+                                app:tint="@color/white" />
+
+                            <TextView
+                                android:id="@+id/tv_mode_rule"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="规则"
+                                android:textColor="@color/white"
+                                android:textSize="12.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- 全局 -->
+                        <LinearLayout
+                            android:id="@+id/mode_global_container"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/icon_mode_global"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                app:srcCompat="@drawable/baseline_public_24"
+                                app:tint="@color/fl_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/tv_mode_global"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="全局"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- 直连 -->
+                        <LinearLayout
+                            android:id="@+id/mode_direct_container"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/icon_mode_direct"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                app:srcCompat="@drawable/ic_fl_target"
+                                app:tint="@color/fl_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/tv_mode_direct"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="直连"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="12.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 4. VPN Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_vpn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <FrameLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="14dp"
+                        android:background="@drawable/bg_fl_scallop_active">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            app:srcCompat="@drawable/ic_baseline_security_24"
+                            app:tint="@color/white" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="VPN"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_vpn_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="已开启"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_vpn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:text="@string/dashboard_quick_tools"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:checked="true"
+                        app:thumbTint="@color/white"
+                        app:trackTint="@color/theme_primary" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 5. 内网 IP & 局域网代理 (Local IP & LAN Proxy Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_lan_ip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_quick_restart"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:text="@string/dashboard_restart_core"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/ic_baseline_refresh_24"
-                            app:iconSize="16dp" />
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_hardware_router"
+                            app:tint="@color/fl_text_secondary" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_quick_ping_all"
-                            style="?attr/materialButtonOutlinedStyle"
+                        <TextView
                             android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_marginStart="4dp"
+                            android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/test_group_proxies"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/ic_baseline_speed_24"
-                            app:iconSize="16dp" />
+                            android:text="内网 IP"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
+                        <ImageButton
+                            android:id="@+id/btn_copy_lan_ip"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/copy_label"
+                            android:padding="6dp"
+                            android:scaleType="centerInside"
+                            app:srcCompat="@drawable/ic_fl_copy"
+                            app:tint="@color/fl_text_secondary" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tv_lan_ip"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        android:fontFamily="sans-serif-medium"
+                        android:text="192.168.1.1"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="19sp"
+                        android:textStyle="bold" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_quick_logs"
-                            style="?attr/materialButtonOutlinedStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:text="@string/logcat"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/ic_action_description"
-                            app:iconSize="16dp" />
+                    <!-- Inner 局域网代理 Sub-Card -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_fl_subcard"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp">
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_quick_rules"
-                            style="?attr/materialButtonOutlinedStyle"
+                        <FrameLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/bg_fl_tonal_circle">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                app:srcCompat="@drawable/ic_fl_wifi"
+                                app:tint="@color/theme_primary" />
+                        </FrameLayout>
+
+                        <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="42dp"
-                            android:layout_marginStart="4dp"
+                            android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/tab_rules"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/ic_maps_directions"
-                            app:iconSize="16dp" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="局域网代理"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_lan_proxy_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="已关闭"
+                                android:textColor="@color/fl_text_secondary"
+                                android:textSize="11.5sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_lan_proxy"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
 
                     </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 6. 服务状态 (Service Status / Connectivity Check Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_service_health"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_baseline_security_24"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="服务状态"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_health_badge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_pill_fast"
+                            android:paddingHorizontal="9dp"
+                            android:paddingVertical="2.5dp"
+                            android:text="点击测速"
+                            android:textColor="@color/fl_pill_fast_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            app:srcCompat="@drawable/ic_fl_chevron_right"
+                            app:tint="@color/fl_text_secondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <!-- Google Latency Sub-Card -->
+                        <LinearLayout
+                            android:id="@+id/card_ping_google"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_fl_subcard"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="10dp">
+
+                            <FrameLayout
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_marginEnd="10dp">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    app:srcCompat="@drawable/ic_fl_google"
+                                    app:tint="@color/fl_text_primary" />
+
+                                <View
+                                    android:id="@+id/dot_google"
+                                    android:layout_width="8dp"
+                                    android:layout_height="8dp"
+                                    android:layout_gravity="bottom|end"
+                                    android:background="@drawable/bg_status_dot" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_ping_google"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="-- ms"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="13.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- GitHub Latency Sub-Card -->
+                        <LinearLayout
+                            android:id="@+id/card_ping_github"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_fl_subcard"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="10dp">
+
+                            <FrameLayout
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_marginEnd="10dp">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    app:srcCompat="@drawable/ic_fl_github"
+                                    app:tint="@color/fl_text_primary" />
+
+                                <View
+                                    android:id="@+id/dot_github"
+                                    android:layout_width="8dp"
+                                    android:layout_height="8dp"
+                                    android:layout_gravity="bottom|end"
+                                    android:background="@drawable/bg_status_dot" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_ping_github"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:text="-- ms"
+                                android:textColor="@color/fl_text_primary"
+                                android:textSize="13.5sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 7. 配置 (Active Profile / Subscription Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_active_profile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_fl_document"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="配置"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <ImageButton
+                            android:id="@+id/btn_refresh_profile"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginEnd="4dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/group_update"
+                            android:padding="6dp"
+                            android:scaleType="centerInside"
+                            app:srcCompat="@drawable/ic_baseline_refresh_24"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            app:srcCompat="@drawable/ic_fl_chevron_right"
+                            app:tint="@color/fl_text_secondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_switch_profile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_profile_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="默认配置"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="15.5sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="6dp"
+                            app:srcCompat="@drawable/ic_baseline_compare_arrows_24"
+                            app:tint="@color/fl_text_secondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_profile_updated"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="更新于 刚刚"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tv_profile_type"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="远程"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="bottom"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_profile_percent"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0% 已用"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_profile_traffic"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 B / ∞"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progress_profile_traffic"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="8dp"
+                        android:progress="5"
+                        app:indicatorColor="@color/theme_primary"
+                        app:trackColor="#E2E8F0"
+                        app:trackCornerRadius="3dp" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 8. 策略组 (Strategy Groups Summary Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_strategy_groups"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="6dp"
+                            app:srcCompat="@drawable/ic_baseline_layers_24"
+                            app:tint="@color/fl_text_secondary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="策略组"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            app:srcCompat="@drawable/ic_fl_chevron_right"
+                            app:tint="@color/fl_text_secondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_strategy_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="3"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="3dp"
+                            android:layout_weight="1"
+                            android:text="个"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="13sp" />
+
+                        <LinearLayout
+                            android:id="@+id/layout_strategy_badges"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 9. Bottom Real-Time Stats Card (实时连接 / 最近请求 / DNS查询) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_realtime_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1.5dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_stat_connections"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="0"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="实时连接"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_stat_requests"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="0"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="最近请求"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_stat_dns"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="0"
+                            android:textColor="@color/fl_text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="DNS查询"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

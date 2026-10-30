@@ -18,9 +18,18 @@ open class ToolbarFragment : Fragment {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         toolbar = view.findViewById(R.id.toolbar)
-        toolbar.setNavigationIcon(R.drawable.ic_navigation_menu)
-        toolbar.setNavigationOnClickListener {
-            (activity as MainActivity).binding.drawerLayout.openDrawer(GravityCompat.START)
+        val isSubTool = this is RouteFragment || this is SettingsFragment ||
+                this is LogcatFragment || this is WebviewFragment || this is AboutFragment
+        if (isSubTool) {
+            toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+            toolbar.setNavigationOnClickListener {
+                (activity as? MainActivity)?.displayFragmentWithId(R.id.nav_tools)
+            }
+        } else {
+            toolbar.setNavigationIcon(R.drawable.ic_navigation_menu)
+            toolbar.setNavigationOnClickListener {
+                (activity as? MainActivity)?.binding?.drawerLayout?.openDrawer(GravityCompat.START)
+            }
         }
     }
 

@@ -2,17 +2,86 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/fl_bg_light">
+
+    <!-- Hidden toolbar for ToolbarFragment base class compatibility -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include
-            layout="@layout/layout_appbar"
+        <!-- FlClash 配置 Top Header: Large Title + Pill (Refresh & Sort) + Circle (+) -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="18dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="10dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="配置"
+                android:textColor="@color/fl_text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <!-- Pill Container for Refresh All + Sort -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_fl_tonal_pill"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="4dp">
+
+                <ImageButton
+                    android:id="@+id/btn_update_all"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/update_all_subscription"
+                    android:padding="7dp"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_baseline_refresh_24"
+                    app:tint="@color/fl_text_primary" />
+
+                <ImageButton
+                    android:id="@+id/btn_sort_groups"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="配置排序"
+                    android:padding="7dp"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_fl_drag_handle"
+                    app:tint="@color/fl_text_primary" />
+            </LinearLayout>
+
+            <!-- Circular + Button -->
+            <ImageButton
+                android:id="@+id/btn_add_group_popup"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_fl_tonal_circle"
+                android:contentDescription="@string/group_create"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_fl_add_circle"
+                app:tint="@color/fl_text_primary" />
+
+        </LinearLayout>
 
         <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
             android:id="@+id/group_list"
@@ -20,26 +89,13 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingHorizontal="4dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="72dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="96dp"
             android:scrollbarSize="0dp"
             app:fastScrollAutoHide="true"
             app:fastScrollThumbColor="?colorPrimary"
             app:fastScrollThumbInactiveColor="?colorPrimary" />
 
     </LinearLayout>
-
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fab_add_group"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:backgroundTint="?colorPrimary"
-        android:text="@string/group_create"
-        android:textColor="@color/white"
-        app:elevation="4dp"
-        app:icon="@drawable/ic_content_add"
-        app:iconTint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

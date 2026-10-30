@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/fl_bg_light"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="28dp">
+
+    <!-- Top Drag Handle Pill -->
+    <View
+        android:layout_width="38dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_fl_tonal_pill" />
+
+    <!-- Header Row: Cancel (X) + 配置排序 + Confirm (✓) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_sort_cancel"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@android:string/cancel"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_navigation_close"
+            app:tint="@color/fl_text_primary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="配置排序"
+            android:textColor="@color/fl_text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_sort_confirm"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@android:string/ok"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_action_done"
+            app:tint="@color/theme_primary" />
+
+    </LinearLayout>
+
+    <!-- Rounded Card Wrapping Reorderable List -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/fl_card_bg"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="1.5dp"
+        app:strokeColor="@color/fl_card_stroke"
+        app:strokeWidth="1dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_sort_groups"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:paddingVertical="4dp" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

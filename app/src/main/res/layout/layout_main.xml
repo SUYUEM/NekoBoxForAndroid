@@ -5,38 +5,51 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fl_bg_light"
     tools:openDrawer="start">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/fl_bg_light"
         android:clipChildren="false">
 
-        <!-- FlClash Main Layout: Content + Modern Bottom Navigation Bar -->
-        <LinearLayout
+        <!-- Main Fragment Container -->
+        <FrameLayout
+            android:id="@+id/fragment_holder"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:background="@color/fl_bg_light" />
 
-            <androidx.coordinatorlayout.widget.CoordinatorLayout
-                android:id="@+id/fragment_holder"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+        <!-- FlClash Iconic Floating Pill Bottom Navigation Bar (4 Tabs) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/bottom_nav_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginHorizontal="26dp"
+            android:layout_marginBottom="14dp"
+            app:cardBackgroundColor="@color/fl_card_bg"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="10dp"
+            app:strokeColor="@color/fl_card_stroke"
+            app:strokeWidth="1dp">
 
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/bottom_navigation"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/colorBackground"
-                app:elevation="8dp"
+                android:layout_height="62dp"
+                android:background="@android:color/transparent"
+                app:elevation="0dp"
+                app:itemBackground="@drawable/bg_fl_bottom_nav_item"
+                app:itemIconSize="22dp"
                 app:itemIconTint="@color/bottom_nav_color"
                 app:itemTextColor="@color/bottom_nav_color"
                 app:labelVisibilityMode="labeled"
                 app:menu="@menu/bottom_nav_menu" />
 
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Hidden legacy views for safe backward compatibility -->
         <com.google.android.material.progressindicator.CircularProgressIndicator

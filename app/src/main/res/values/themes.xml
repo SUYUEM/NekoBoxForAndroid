@@ -4,9 +4,11 @@
         <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
         <item name="actionModeCloseDrawable">@drawable/ic_navigation_close</item>
         <item name="colorButtonNormal">?colorAccent</item>
-        <item name="android:statusBarColor">?colorPrimary</item>
-        <item name="android:navigationBarColor">?android:attr/colorBackground</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/fl_bg_light</item>
+        <item name="android:colorBackground">@color/fl_bg_light</item>
+        <item name="android:statusBarColor">@color/fl_bg_light</item>
+        <item name="android:navigationBarColor">@color/fl_bg_light</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o">true</item>
         <item name="colorPrimary">@color/theme_primary</item>
         <item name="colorPrimaryDark">@color/theme_primary_dark</item>

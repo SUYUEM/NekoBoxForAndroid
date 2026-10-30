@@ -149,6 +149,148 @@ class ConfigurationFragment @JvmOverloads constructor(
         ) {
             if (adapter.groupList.size > position) {
                 DataStore.selectedGroup = adapter.groupList[position].id
+                refreshStrategyAccordionHeader()
+            }
+        }
+    }
+
+    private var expandedStrategyMode = 0 // 0 = all collapsed (FlClash screenshot 5), 1 = Selector, 2 = URLTest, 3 = Fallback
+
+    fun withCountryFlag(name: String): String {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return "🌐 未命名节点"
+        val firstCodePoint = Character.codePointAt(trimmed, 0)
+        if (firstCodePoint in 0x1F1E6..0x1F1FF) return trimmed
+        val upper = trimmed.uppercase()
+        val flag = when {
+            upper.contains("香港") || upper.contains("HK") || upper.contains("HONG KONG") -> "🇭🇰"
+            upper.contains("台湾") || upper.contains("TW") || upper.contains("TAIWAN") || upper.contains("台北") -> "🇹🇼"
+            upper.contains("日本") || upper.contains("JP") || upper.contains("JAPAN") || upper.contains("东京") || upper.contains("大阪") -> "🇯🇵"
+            upper.contains("新加坡") || upper.contains("SG") || upper.contains("SINGAPORE") || upper.contains("狮城") -> "🇸🇬"
+            upper.contains("美国") || upper.contains("US") || upper.contains("UNITED STATES") || upper.contains("洛杉矶") || upper.contains("硅谷") || upper.contains("西雅图") -> "🇺🇸"
+            upper.contains("韩国") || upper.contains("KR") || upper.contains("KOREA") || upper.contains("首尔") -> "🇰🇷"
+            upper.contains("英国") || upper.contains("UK") || upper.contains("GB") || upper.contains("伦敦") -> "🇬🇧"
+            upper.contains("德国") || upper.contains("DE") || upper.contains("GERMANY") || upper.contains("法兰克福") -> "🇩🇪"
+            upper.contains("法国") || upper.contains("FR") || upper.contains("巴黎") -> "🇫🇷"
+            upper.contains("加拿大") || upper.contains("CA") || upper.contains("多伦多") -> "🇨🇦"
+            upper.contains("澳大利亚") || upper.contains("澳洲") || upper.contains("AU") || upper.contains("悉尼") -> "🇦🇺"
+            upper.contains("俄罗斯") || upper.contains("RU") || upper.contains("莫斯科") -> "🇷🇺"
+            upper.contains("印度") || upper.contains("IN") || upper.contains("孟买") -> "🇮🇳"
+            else -> "🌐"
+        }
+        return "$flag $trimmed"
+    }
+
+    private fun firstAvatarChar(name: String): String {
+        for (ch in name) {
+            if (Character.isLetterOrDigit(ch)) return ch.uppercaseChar().toString()
+        }
+        return name.take(1).ifBlank { "代" }
+    }
+
+    fun refreshStrategyAccordionHeader() {
+        val rootView = view ?: return
+        runOnDefaultDispatcher {
+            val currentGroup = runCatching { DataStore.currentGroup() }.getOrNull()
+            val profiles = currentGroup?.let { SagerDatabase.proxyDao.getByGroup(it.id) } ?: emptyList()
+            val selectedProxy = profiles.find { it.id == DataStore.selectedProxy } ?: profiles.firstOrNull()
+            val fastestProxy = profiles.filter { it.status == 1 && it.ping > 0 }.minByOrNull { it.ping }
+                ?: profiles.getOrNull(1)
+                ?: selectedProxy
+            val fallbackProxy = profiles.filter { it.status == 1 }.getOrNull(1)
+                ?: profiles.getOrNull(2)
+                ?: profiles.lastOrNull()
+                ?: selectedProxy
+
+            onMainDispatcher {
+                if (!isAdded) return@onMainDispatcher
+                val groupTitle = currentGroup?.displayName()?.takeIf { it.isNotBlank() } ?: "默认策略"
+                rootView.findViewById<TextView>(R.id.tv_selector_avatar)?.text = firstAvatarChar(groupTitle)
+                rootView.findViewById<TextView>(R.id.tv_selector_title)?.text = groupTitle
+                rootView.findViewById<TextView>(R.id.tv_selector_current)?.text =
+                    selectedProxy?.let { withCountryFlag(it.displayName()) } ?: "暂无节点，请先在「配置」中导入订阅"
+
+                rootView.findViewById<TextView>(R.id.tv_urltest_current)?.text =
+                    fastestProxy?.let {
+                        val suffix = if (it.ping > 0) " (${it.ping} ms)" else ""
+                        withCountryFlag(it.displayName()) + suffix
+                    } ?: "⚡ 自动测速优选最低延迟节点"
+
+                rootView.findViewById<TextView>(R.id.tv_fallback_current)?.text =
+                    fallbackProxy?.let { withCountryFlag(it.displayName()) } ?: "🛡️ 节点不可用时自动切换"
+            }
+        }
+    }
+
+    private fun setStrategyAccordionExpanded(mode: Int) {
+        val rootView = view ?: return
+        expandedStrategyMode = if (expandedStrategyMode == mode && !select) 0 else mode
+
+        val cardSelector = rootView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.card_group_selector)
+        val cardUrlTest = rootView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.card_group_urltest)
+        val cardFallback = rootView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.card_group_fallback)
+        val arrowSelector = rootView.findViewById<ImageView>(R.id.iv_selector_arrow)
+        val arrowUrlTest = rootView.findViewById<ImageView>(R.id.iv_urltest_arrow)
+        val arrowFallback = rootView.findViewById<ImageView>(R.id.iv_fallback_arrow)
+        val expandedPanel = rootView.findViewById<View>(R.id.layout_expanded_proxies)
+        val expandedHint = rootView.findViewById<TextView>(R.id.tv_expanded_group_hint)
+
+        val ctx = context ?: return
+        val activeStroke = ContextCompat.getColor(ctx, R.color.fl_card_active_stroke)
+        val normalStroke = ContextCompat.getColor(ctx, R.color.fl_card_stroke)
+        val activeBg = ContextCompat.getColor(ctx, R.color.fl_card_active_bg)
+        val normalBg = ContextCompat.getColor(ctx, R.color.fl_card_bg)
+
+        when (expandedStrategyMode) {
+            0 -> {
+                cardSelector?.isVisible = true
+                cardUrlTest?.isVisible = true
+                cardFallback?.isVisible = true
+                expandedPanel?.isVisible = false
+
+                cardSelector?.strokeColor = normalStroke
+                cardSelector?.setCardBackgroundColor(normalBg)
+                cardUrlTest?.strokeColor = normalStroke
+                cardUrlTest?.setCardBackgroundColor(normalBg)
+                cardFallback?.strokeColor = normalStroke
+                cardFallback?.setCardBackgroundColor(normalBg)
+
+                arrowSelector?.setImageResource(R.drawable.ic_fl_chevron_down)
+                arrowUrlTest?.setImageResource(R.drawable.ic_fl_chevron_down)
+                arrowFallback?.setImageResource(R.drawable.ic_fl_chevron_down)
+            }
+            1 -> {
+                cardSelector?.isVisible = true
+                cardUrlTest?.isVisible = false
+                cardFallback?.isVisible = false
+                expandedPanel?.isVisible = true
+                expandedHint?.text = "Selector · 手动选择节点"
+
+                cardSelector?.strokeColor = activeStroke
+                cardSelector?.setCardBackgroundColor(activeBg)
+                arrowSelector?.setImageResource(R.drawable.ic_fl_chevron_up)
+            }
+            2 -> {
+                cardSelector?.isVisible = false
+                cardUrlTest?.isVisible = true
+                cardFallback?.isVisible = false
+                expandedPanel?.isVisible = true
+                expandedHint?.text = "URLTest · 自动测速优选节点"
+
+                cardUrlTest?.strokeColor = activeStroke
+                cardUrlTest?.setCardBackgroundColor(activeBg)
+                arrowUrlTest?.setImageResource(R.drawable.ic_fl_chevron_up)
+            }
+            3 -> {
+                cardSelector?.isVisible = false
+                cardUrlTest?.isVisible = false
+                cardFallback?.isVisible = true
+                expandedPanel?.isVisible = true
+                expandedHint?.text = "Fallback · 故障转移节点列表"
+
+                cardFallback?.strokeColor = activeStroke
+                cardFallback?.setCardBackgroundColor(activeBg)
+                arrowFallback?.setImageResource(R.drawable.ic_fl_chevron_up)
             }
         }
     }
@@ -185,7 +327,67 @@ class ConfigurationFragment @JvmOverloads constructor(
             toolbar.setNavigationOnClickListener {
                 requireActivity().finish()
             }
+            view.findViewById<TextView>(R.id.tv_proxy_header_title)?.setText(titleRes)
+            view.findViewById<View>(R.id.btn_proxy_close)?.apply {
+                isVisible = true
+                setOnClickListener { requireActivity().finish() }
+            }
+            view.findViewById<View>(R.id.btn_proxy_more)?.isVisible = false
         }
+
+        val proxySearchCard = view.findViewById<View>(R.id.card_proxy_search)
+        val proxySearchView = view.findViewById<SearchView>(R.id.proxy_search_view)
+        proxySearchView?.setOnQueryTextListener(this)
+
+        view.findViewById<View>(R.id.btn_proxy_search)?.setOnClickListener {
+            val nowVisible = proxySearchCard?.isVisible != true
+            proxySearchCard?.isVisible = nowVisible
+            if (nowVisible) {
+                if (expandedStrategyMode == 0) {
+                    setStrategyAccordionExpanded(1)
+                }
+                proxySearchView?.requestFocus()
+            } else {
+                proxySearchView?.setQuery("", false)
+                proxySearchView?.clearFocus()
+            }
+        }
+
+        view.findViewById<View>(R.id.btn_proxy_more)?.setOnClickListener { anchor ->
+            val popup = PopupMenu(requireContext(), anchor)
+            popup.menuInflater.inflate(R.menu.add_profile_menu, popup.menu)
+            popup.menu.removeItem(R.id.action_search)
+            popup.setOnMenuItemClickListener { item ->
+                onMenuItemClick(item)
+            }
+            popup.show()
+        }
+
+        // Strategy Group Accordion Cards
+        view.findViewById<View>(R.id.card_group_selector)?.setOnClickListener {
+            setStrategyAccordionExpanded(1)
+        }
+        view.findViewById<View>(R.id.card_group_urltest)?.setOnClickListener {
+            setStrategyAccordionExpanded(2)
+        }
+        view.findViewById<View>(R.id.card_group_fallback)?.setOnClickListener {
+            setStrategyAccordionExpanded(3)
+        }
+
+        view.findViewById<View>(R.id.btn_collapse_nodes)?.setOnClickListener {
+            setStrategyAccordionExpanded(0)
+        }
+
+        view.findViewById<View>(R.id.btn_quick_urltest)?.setOnClickListener {
+            urlTest()
+        }
+
+        if (select) {
+            setStrategyAccordionExpanded(1)
+        } else {
+            setStrategyAccordionExpanded(0)
+        }
+        refreshStrategyAccordionHeader()
 
         val searchView = toolbar.findViewById<SearchView>(R.id.action_search)
         if (searchView != null) {
@@ -887,8 +1089,24 @@ class ConfigurationFragment @JvmOverloads constructor(
                         Logs.w(e)
                     }
                 }
+                val best = test.results.filter { it.status == 1 && it.ping > 0 }.minByOrNull { it.ping }
+                if (best != null && expandedStrategyMode == 2) {
+                    val lastSelected = DataStore.selectedProxy
+                    DataStore.selectedProxy = best.id
+                    ProfileManager.postUpdate(lastSelected)
+                    ProfileManager.postUpdate(best.id)
+                    if (DataStore.serviceState.canStop) {
+                        SagerNet.reloadService()
+                    }
+                    onMainDispatcher {
+                        if (isAdded) {
+                            snackbar("自动选择已切换至最低延迟: ${best.displayName()} (${best.ping} ms)").show()
+                        }
+                    }
+                }
                 GroupManager.postReload(DataStore.currentGroupId())
                 DataStore.runningTest = false
+                refreshStrategyAccordionHeader()
             }
         }
         test.minimize = {
@@ -956,8 +1174,24 @@ class ConfigurationFragment @JvmOverloads constructor(
                         Logs.w(e)
                     }
                 }
+                val best = test.results.filter { it.status == 1 && it.ping > 0 }.minByOrNull { it.ping }
+                if (best != null && expandedStrategyMode == 2) {
+                    val lastSelected = DataStore.selectedProxy
+                    DataStore.selectedProxy = best.id
+                    ProfileManager.postUpdate(lastSelected)
+                    ProfileManager.postUpdate(best.id)
+                    if (DataStore.serviceState.canStop) {
+                        SagerNet.reloadService()
+                    }
+                    onMainDispatcher {
+                        if (isAdded) {
+                            snackbar("自动选择已切换至最低延迟: ${best.displayName()} (${best.ping} ms)").show()
+                        }
+                    }
+                }
                 GroupManager.postReload(DataStore.currentGroupId())
                 DataStore.runningTest = false
+                refreshStrategyAccordionHeader()
             }
         }
         test.minimize = {
@@ -1594,12 +1828,13 @@ class ConfigurationFragment @JvmOverloads constructor(
                                     SagerNet.startService()
                                 }
                             }
+                            pf.refreshStrategyAccordionHeader()
                         }
 
                     }
                 }
 
-                profileName.text = proxyEntity.displayName()
+                profileName.text = pf.withCountryFlag(proxyEntity.displayName())
                 profileType.text = proxyEntity.displayType()
                 profileType.setTextColor(requireContext().getProtocolColor(proxyEntity.type))
 

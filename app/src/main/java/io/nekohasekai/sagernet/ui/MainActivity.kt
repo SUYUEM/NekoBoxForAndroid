@@ -76,10 +76,13 @@ class MainActivity : ThemedActivity(),
             displayFragmentWithId(R.id.nav_dashboard)
         }
         onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is DashboardFragment) {
-                moveTaskToBack(true)
-            } else {
-                displayFragmentWithId(R.id.nav_dashboard)
+            val current = supportFragmentManager.findFragmentById(R.id.fragment_holder)
+            when (current) {
+                is DashboardFragment -> moveTaskToBack(true)
+                is RouteFragment, is SettingsFragment, is WebviewFragment, is LogcatFragment, is AboutFragment -> {
+                    displayFragmentWithId(R.id.nav_tools)
+                }
+                else -> displayFragmentWithId(R.id.nav_dashboard)
             }
         }
 
@@ -396,7 +399,11 @@ class MainActivity : ThemedActivity(),
             else -> return false
         }
         navigation.menu.findItem(id)?.isChecked = true
-        binding.bottomNavigation.menu.findItem(id)?.isChecked = true
+        val bottomId = when (id) {
+            R.id.nav_dashboard, R.id.nav_configuration, R.id.nav_group, R.id.nav_tools -> id
+            else -> R.id.nav_tools
+        }
+        binding.bottomNavigation.menu.findItem(bottomId)?.isChecked = true
         return true
     }
 
@@ -415,10 +422,7 @@ class MainActivity : ThemedActivity(),
 
     override fun snackbarInternal(text: CharSequence): Snackbar {
         return Snackbar.make(binding.coordinator, text, Snackbar.LENGTH_LONG).apply {
-            if (binding.fab.isShown) {
-                anchorView = binding.fab
-            }
-            // TODO
+            anchorView = binding.bottomNavCard
         }
     }
 

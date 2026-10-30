@@ -4,34 +4,448 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fl_bg_light"
     android:orientation="vertical"
     tools:context=".ui.ConfigurationFragment">
 
-    <include
-        layout="@layout/layout_appbar"
+    <!-- Hidden toolbar kept for ToolbarFragment & menu inflation compatibility -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/group_tab"
+    <!-- FlClash 代理 Top Header: Large Title + Search Circle + More Circle -->
+    <LinearLayout
+        android:id="@+id/header_proxies"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/colorBackground"
-        android:elevation="2dp"
-        android:visibility="gone"
-        app:tabIndicatorColor="?colorPrimary"
-        app:tabIndicatorFullWidth="false"
-        app:tabIndicatorHeight="3dp"
-        app:tabMode="scrollable"
-        app:tabPaddingStart="16dp"
-        app:tabRippleColor="@color/fl_card_active_bg"
-        app:tabSelectedTextColor="?colorPrimary"
-        app:tabTextColor="?android:attr/textColorSecondary"
-        app:tabUnboundedRipple="false" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="10dp">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/group_pager"
+        <ImageButton
+            android:id="@+id/btn_proxy_close"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@string/close"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_navigation_close"
+            app:tint="@color/fl_text_primary" />
+
+        <TextView
+            android:id="@+id/tv_proxy_header_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="代理"
+            android:textColor="@color/fl_text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_proxy_search"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@string/action_search"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_baseline_manage_search_24"
+            app:tint="@color/fl_text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_proxy_more"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_fl_tonal_circle"
+            android:contentDescription="@string/more"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_baseline_more_vert_24"
+            app:tint="@color/fl_text_primary" />
+
+    </LinearLayout>
+
+    <!-- Collapsible Search Bar -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_proxy_search"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/fl_card_bg"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="1dp"
+        app:strokeColor="@color/fl_card_stroke"
+        app:strokeWidth="1dp">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/proxy_search_view"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:queryHint="搜索节点名称、协议或地区..." />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- FlClash Strategy Group Accordion Cards Container -->
+    <LinearLayout
+        android:id="@+id/layout_strategy_accordion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="4dp">
+
+        <!-- 1. Primary Subscription / Group Card (Selector) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_group_selector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/fl_card_bg"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="1.5dp"
+            app:strokeColor="@color/fl_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp">
+
+                <TextView
+                    android:id="@+id/tv_selector_avatar"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_marginEnd="14dp"
+                    android:background="@drawable/bg_fl_group_avatar"
+                    android:gravity="center"
+                    android:text="良"
+                    android:textColor="@color/theme_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_selector_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="节点选择"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_selector_current"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="🇭🇰 点击展开选择节点"
+                        android:textColor="@color/fl_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:text="Selector"
+                    android:textColor="@color/fl_text_secondary"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_fl_tonal_circle">
+
+                    <ImageView
+                        android:id="@+id/iv_selector_arrow"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        app:srcCompat="@drawable/ic_fl_chevron_down"
+                        app:tint="@color/fl_text_primary" />
+                </FrameLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 2. 自动选择 Card (URLTest) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_group_urltest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/fl_card_bg"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="1.5dp"
+            app:strokeColor="@color/fl_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp">
+
+                <TextView
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_marginEnd="14dp"
+                    android:background="@drawable/bg_fl_group_avatar"
+                    android:gravity="center"
+                    android:text="自"
+                    android:textColor="@color/theme_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自动选择"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_urltest_current"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="⚡ 自动测速优选最低延迟节点"
+                        android:textColor="@color/fl_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:text="URLTest"
+                    android:textColor="@color/fl_text_secondary"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_fl_tonal_circle">
+
+                    <ImageView
+                        android:id="@+id/iv_urltest_arrow"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        app:srcCompat="@drawable/ic_fl_chevron_down"
+                        app:tint="@color/fl_text_primary" />
+                </FrameLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 3. 故障转移 Card (Fallback) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_group_fallback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/fl_card_bg"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="1.5dp"
+            app:strokeColor="@color/fl_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp">
+
+                <TextView
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_marginEnd="14dp"
+                    android:background="@drawable/bg_fl_group_avatar"
+                    android:gravity="center"
+                    android:text="故"
+                    android:textColor="@color/theme_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="故障转移"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_fallback_current"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="🛡️ 节点不可用时自动切换"
+                        android:textColor="@color/fl_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:text="Fallback"
+                    android:textColor="@color/fl_text_secondary"
+                    android:textSize="12.5sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_fl_tonal_circle">
+
+                    <ImageView
+                        android:id="@+id/iv_fallback_arrow"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        app:srcCompat="@drawable/ic_fl_chevron_down"
+                        app:tint="@color/fl_text_primary" />
+                </FrameLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <!-- Expanded Proxy Nodes Panel (Appears when a Strategy Group Card is tapped) -->
+    <LinearLayout
+        android:id="@+id/layout_expanded_proxies"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <!-- Quick Strategy Action Bar inside Expanded Group -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp">
+
+            <TextView
+                android:id="@+id/tv_expanded_group_hint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="节点列表"
+                android:textColor="@color/fl_text_secondary"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_quick_urltest"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginEnd="8dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:text="⚡ 一键测速"
+                android:textSize="11.5sp"
+                app:cornerRadius="17dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_collapse_nodes"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:text="收起 ▲"
+                android:textSize="11.5sp"
+                app:cornerRadius="17dp" />
+
+        </LinearLayout>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/group_tab"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="@color/fl_bg_light"
+            android:elevation="0dp"
+            android:visibility="gone"
+            app:tabIndicatorColor="?colorPrimary"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="scrollable"
+            app:tabPaddingStart="16dp"
+            app:tabRippleColor="@color/fl_card_active_bg"
+            app:tabSelectedTextColor="?colorPrimary"
+            app:tabTextColor="@color/fl_text_secondary"
+            app:tabUnboundedRipple="false" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/group_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
 
 </LinearLayout>

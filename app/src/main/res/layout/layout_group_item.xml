@@ -5,12 +5,13 @@
     android:id="@+id/content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="10dp"
+    android:layout_marginHorizontal="12dp"
     android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="16dp"
+    app:cardBackgroundColor="@color/fl_card_bg"
+    app:cardCornerRadius="20dp"
     app:cardElevation="1.5dp"
     app:strokeColor="@color/fl_card_stroke"
     app:strokeWidth="1dp">
@@ -18,213 +19,154 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="16dp">
 
-        <!-- Updating Progress Line -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/subscription_update_progress"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:indicatorColor="?colorPrimary" />
-
+        <!-- Left Column: Name + Expiration Pill on top, Traffic / Node count below -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="12dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <!-- Top Row: Badge, Group Name, User, Action Icons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/group_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/bg_badge_rounded"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="3dp"
-                    android:text="@string/group_badge_subscription"
-                    android:textColor="?colorPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <!-- Active Status Pill -->
-                <TextView
-                    android:id="@+id/group_active_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/bg_pill_fast"
-                    android:paddingHorizontal="7dp"
-                    android:paddingVertical="2dp"
-                    android:text="✓ 活跃"
-                    android:textColor="@color/fl_pill_fast_text"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
 
                 <TextView
                     android:id="@+id/group_name"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="15.5sp"
-                    android:textStyle="bold"
-                    tools:text="✈️ 极速云专线" />
-
-                <TextView
-                    android:id="@+id/group_user"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:visibility="gone"
-                    tools:text="user" />
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/edit"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/edit"
-                    android:focusable="true"
-                    android:padding="7dp"
-                    app:srcCompat="@drawable/ic_image_edit"
-                    app:tint="?android:attr/textColorSecondary" />
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/options"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:focusable="true"
-                    android:padding="7dp"
-                    app:srcCompat="@drawable/ic_baseline_more_vert_24"
-                    app:tint="?android:attr/textColorSecondary" />
-
-            </LinearLayout>
-
-            <!-- Middle Section: Traffic Progress & Details -->
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/group_traffic_progress"
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:layout_marginTop="10dp"
-                android:visibility="gone"
-                app:indicatorColor="?colorPrimary"
-                app:trackColor="#E2E8F0"
-                app:trackCornerRadius="3dp"
-                tools:progress="45"
-                tools:visibility="visible" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/group_traffic"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    tools:text="已用 15.2 GB / 剩余 84.8 GB"
-                    tools:visibility="visible" />
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/fl_text_primary"
+                    android:textSize="16.5sp"
+                    android:textStyle="bold"
+                    tools:text="良心云" />
 
                 <TextView
                     android:id="@+id/group_expire"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="11.5sp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_badge_rounded"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:textColor="@color/theme_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
                     android:visibility="gone"
-                    tools:text="到期时间：2026-12-31"
+                    tools:text="2026-11-28"
                     tools:visibility="visible" />
-
             </LinearLayout>
 
             <TextView
-                android:id="@+id/group_status"
+                android:id="@+id/group_traffic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="11.5sp"
-                tools:text="36 个配置 | 更新于 10-28" />
-
-            <!-- Bottom Row: Switch Hint & Action Buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical|end"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tap_hint"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:alpha="0.7"
-                    android:text="@string/tap_to_switch"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="11sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/group_copy_link"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginEnd="8dp"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="10dp"
-                    android:text="@string/copy_subscription_link"
-                    android:textSize="12sp"
-                    app:cornerRadius="18dp"
-                    app:icon="@drawable/ic_baseline_link_24"
-                    app:iconSize="15dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/group_update"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:backgroundTint="?colorPrimary"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="14dp"
-                    android:text="@string/group_update"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
-                    app:cornerRadius="18dp"
-                    app:icon="@drawable/ic_baseline_refresh_24"
-                    app:iconSize="15dp"
-                    app:iconTint="@color/white" />
-
-            </LinearLayout>
+                android:layout_marginTop="5dp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/fl_text_secondary"
+                android:textSize="13sp"
+                tools:text="49GB / 1TB" />
 
         </LinearLayout>
+
+        <!-- Right Side: Circular Indeterminate Spinner OR Relative Update Time + Check Circle -->
+        <ProgressBar
+            android:id="@+id/subscription_update_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="12dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/theme_primary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/group_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:textColor="@color/fl_text_secondary"
+            android:textSize="13sp"
+            tools:text="13 小时前" />
+
+        <!-- FlClash Circular Selection Check Button -->
+        <FrameLayout
+            android:id="@+id/group_check_circle"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:background="@drawable/bg_fl_check_active">
+
+            <ImageView
+                android:id="@+id/group_check_icon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_action_done"
+                app:tint="@color/white" />
+        </FrameLayout>
+
+        <!-- Subtle 3-dot menu button for quick access to Edit / Share / Delete -->
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/options"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:focusable="true"
+            android:padding="5dp"
+            app:srcCompat="@drawable/ic_baseline_more_vert_24"
+            app:tint="@color/fl_text_secondary" />
+
+        <!-- Hidden views kept for binding safety -->
+        <TextView
+            android:id="@+id/group_badge"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/group_active_badge"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/group_user"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/edit"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/group_traffic_progress"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/group_copy_link"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/group_update"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

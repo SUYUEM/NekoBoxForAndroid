@@ -9,19 +9,23 @@
     <color name="theme_material_300">#00A389</color>
 
     <!-- FlClash Specific Fresh UI Colors -->
-    <color name="fl_bg_light">#F6F9F8</color>
+    <color name="fl_bg_light">#F5F9F8</color>
     <color name="fl_card_bg">#FFFFFF</color>
-    <color name="fl_card_stroke">#E5EBE8</color>
+    <color name="fl_subcard_bg">#F2F7F5</color>
+    <color name="fl_tonal_btn_bg">#E9F3F0</color>
+    <color name="fl_card_stroke">#E4ECE9</color>
     <color name="fl_card_active_bg">#EDFBF7</color>
     <color name="fl_card_active_stroke">#00A389</color>
+    <color name="fl_text_primary">#0F172A</color>
+    <color name="fl_text_secondary">#64748B</color>
     <color name="fl_pill_fast_bg">#DCFCE7</color>
     <color name="fl_pill_fast_text">#16A34A</color>
     <color name="fl_pill_medium_bg">#FEF3C7</color>
     <color name="fl_pill_medium_text">#D97706</color>
     <color name="fl_pill_slow_bg">#FEE2E2</color>
     <color name="fl_pill_slow_text">#DC2626</color>
-    <color name="fl_pill_neutral_bg">#F1F5F9</color>
-    <color name="fl_pill_neutral_text">#64748B</color>
+    <color name="fl_pill_neutral_bg">#EEF4F2</color>
+    <color name="fl_pill_neutral_text">#52657A</color>
 
     <integer-array name="material_colors">
         <item>@color/theme_primary</item>
