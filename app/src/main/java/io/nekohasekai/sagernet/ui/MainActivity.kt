@@ -8,8 +8,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.RemoteException
+import android.graphics.Typeface
 import android.view.KeyEvent
 import android.view.MenuItem
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.annotation.IdRes
 import androidx.core.app.ActivityCompat
@@ -71,6 +75,11 @@ class MainActivity : ThemedActivity(),
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             displayFragmentWithId(item.itemId)
         }
+
+        binding.tabDashboard.setOnClickListener { displayFragmentWithId(R.id.nav_dashboard) }
+        binding.tabConfiguration.setOnClickListener { displayFragmentWithId(R.id.nav_configuration) }
+        binding.tabGroup.setOnClickListener { displayFragmentWithId(R.id.nav_group) }
+        binding.tabTools.setOnClickListener { displayFragmentWithId(R.id.nav_tools) }
 
         if (savedInstanceState == null) {
             displayFragmentWithId(R.id.nav_dashboard)
@@ -399,12 +408,35 @@ class MainActivity : ThemedActivity(),
             else -> return false
         }
         navigation.menu.findItem(id)?.isChecked = true
-        val bottomId = when (id) {
+        updateBottomNavSelection(id)
+        return true
+    }
+
+    private fun updateBottomNavSelection(id: Int) {
+        val targetId = when (id) {
             R.id.nav_dashboard, R.id.nav_configuration, R.id.nav_group, R.id.nav_tools -> id
             else -> R.id.nav_tools
         }
-        binding.bottomNavigation.menu.findItem(bottomId)?.isChecked = true
-        return true
+
+        val primaryColor = ContextCompat.getColor(this, R.color.theme_primary)
+        val secondaryColor = ContextCompat.getColor(this, R.color.fl_text_secondary)
+        val pillDrawable = ContextCompat.getDrawable(this, R.drawable.bg_fl_nav_pill_active)
+
+        fun updateTab(pill: View, icon: ImageView, text: TextView, isSelected: Boolean) {
+            pill.background = if (isSelected) pillDrawable else null
+            icon.setColorFilter(if (isSelected) primaryColor else secondaryColor)
+            text.setTextColor(if (isSelected) primaryColor else secondaryColor)
+            text.setTypeface(null, if (isSelected) Typeface.BOLD else Typeface.NORMAL)
+        }
+
+        updateTab(binding.pillDashboard, binding.iconDashboard, binding.textDashboard, targetId == R.id.nav_dashboard)
+        updateTab(binding.pillConfiguration, binding.iconConfiguration, binding.textConfiguration, targetId == R.id.nav_configuration)
+        updateTab(binding.pillGroup, binding.iconGroup, binding.textGroup, targetId == R.id.nav_group)
+        updateTab(binding.pillTools, binding.iconTools, binding.textTools, targetId == R.id.nav_tools)
+
+        try {
+            binding.bottomNavigation.menu.findItem(targetId)?.isChecked = true
+        } catch (_: Exception) {}
     }
 
     private fun changeState(

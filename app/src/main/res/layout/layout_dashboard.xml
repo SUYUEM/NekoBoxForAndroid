@@ -53,7 +53,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="92dp">
+        android:paddingBottom="128dp">
 
         <LinearLayout
             android:layout_width="match_parent"

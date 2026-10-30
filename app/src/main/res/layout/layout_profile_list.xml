@@ -10,7 +10,7 @@
     android:paddingLeft="10dp"
     android:paddingTop="6dp"
     android:paddingRight="10dp"
-    android:paddingBottom="96dp"
+    android:paddingBottom="128dp"
     android:scrollbarSize="0dp"
     app:fastScrollAutoHide="true"
     app:fastScrollThumbColor="?colorPrimary"
