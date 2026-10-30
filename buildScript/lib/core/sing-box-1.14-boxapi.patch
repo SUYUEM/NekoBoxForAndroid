@@ -560,10 +560,10 @@ index a11c45e..490d645 100644
 +	return json.UnmarshalDisallowUnknownFields(content, (*_DirectOutboundOptions)(d))
  }
 diff --git a/option/dns.go b/option/dns.go
-index 1180a62..09d5bfb 100644
+index 1180a62..6cc6be7 100644
 --- a/option/dns.go
 +++ b/option/dns.go
-@@ -3,16 +3,21 @@ package option
+@@ -3,16 +3,20 @@ package option
  import (
  	"context"
  	"net/netip"
@@ -571,7 +571,6 @@ index 1180a62..09d5bfb 100644
  	"reflect"
  
  	C "github.com/sagernet/sing-box/constant"
-+	"github.com/sagernet/sing-box/experimental/deprecated"
  	"github.com/sagernet/sing-box/schema"
 +	"github.com/sagernet/sing/common"
  	E "github.com/sagernet/sing/common/exceptions"
@@ -585,7 +584,7 @@ index 1180a62..09d5bfb 100644
  )
  
  type RawDNSOptions struct {
-@@ -23,29 +28,86 @@ type RawDNSOptions struct {
+@@ -23,29 +27,85 @@ type RawDNSOptions struct {
  	DNSClientOptions
  }
  
@@ -633,7 +632,6 @@ index 1180a62..09d5bfb 100644
 +	legacyOptions := o.LegacyDNSOptions
 +	if !dontUpgrade {
 +		if o.FakeIP != nil && o.FakeIP.Enabled {
-+			deprecated.Report(ctx, deprecated.OptionLegacyDNSFakeIPOptions)
 +			ctx = context.WithValue(ctx, (*LegacyDNSFakeIPOptions)(nil), o.FakeIP)
 +		}
 +		o.LegacyDNSOptions = LegacyDNSOptions{}
@@ -645,7 +643,7 @@ index 1180a62..09d5bfb 100644
 +	if !dontUpgrade {
 +		rcodeMap := make(map[string]int)
 +		o.Servers = common.Filter(o.Servers, func(it DNSServerOptions) bool {
-+			if it.Type == C.DNSTypeLegacyRcode {
++			if it.Type == "legacy_rcode" {
 +				rcodeMap[it.Tag] = it.Options.(int)
 +				return false
 +			}
@@ -683,7 +681,7 @@ index 1180a62..09d5bfb 100644
  }
  
  func (o DNSOptions) DescribeSchema(builder schema.Builder) (*schema.Node, error) {
-@@ -114,6 +176,10 @@ type _DNSServerOptions struct {
+@@ -114,6 +174,10 @@ type _DNSServerOptions struct {
  type DNSServerOptions _DNSServerOptions
  
  func (o *DNSServerOptions) MarshalJSONContext(ctx context.Context) ([]byte, error) {
@@ -694,18 +692,17 @@ index 1180a62..09d5bfb 100644
  	return badjson.MarshallObjectsContext(ctx, (*_DNSServerOptions)(o), o.Options)
  }
  
-@@ -129,7 +195,9 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
+@@ -129,7 +193,8 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
  	var options any
  	switch o.Type {
  	case "", C.DNSTypeLegacy:
 -		return E.New(legacyDNSServerRemovedMessage)
 +		o.Type = C.DNSTypeLegacy
 +		options = new(LegacyDNSServerOptions)
-+		deprecated.Report(ctx, deprecated.OptionLegacyDNSTransport)
  	default:
  		var loaded bool
  		options, loaded = registry.CreateOptions(o.Type)
-@@ -142,6 +210,179 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
+@@ -142,6 +207,179 @@ func (o *DNSServerOptions) UnmarshalJSONContext(ctx context.Context, content []b
  		return err
  	}
  	o.Options = options
@@ -853,7 +850,7 @@ index 1180a62..09d5bfb 100644
 +		default:
 +			return E.New("unknown rcode: ", serverURL.Host)
 +		}
-+		o.Type = C.DNSTypeLegacyRcode
++		o.Type = "legacy_rcode"
 +		o.Options = rcode
 +	case C.DNSTypeDHCP:
 +		o.Type = C.DNSTypeDHCP
@@ -885,7 +882,7 @@ index 1180a62..09d5bfb 100644
  	return nil
  }
  
-@@ -176,6 +417,16 @@ func (o *DNSServerAddressOptions) ReplaceServerOptions(options ServerOptions) {
+@@ -176,6 +414,16 @@ func (o *DNSServerAddressOptions) ReplaceServerOptions(options ServerOptions) {
  	*o = DNSServerAddressOptions(options)
  }
  
@@ -902,7 +899,7 @@ index 1180a62..09d5bfb 100644
  type HostsDNSServerOptions struct {
  	Path       badoption.Listable[string]                                `json:"path,omitempty"`
  	Predefined *badjson.TypedMap[string, badoption.Listable[netip.Addr]] `json:"predefined,omitempty"`
-@@ -183,6 +434,10 @@ type HostsDNSServerOptions struct {
+@@ -183,6 +431,10 @@ type HostsDNSServerOptions struct {
  
  type RawLocalDNSServerOptions struct {
  	DialerOptions
