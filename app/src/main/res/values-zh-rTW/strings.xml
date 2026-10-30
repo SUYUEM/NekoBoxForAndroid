@@ -444,7 +444,7 @@
     <string name="tab_profiles">配置</string>
     <string name="tab_rules">路由</string>
     <string name="tab_settings">設定</string>
-    <string name="dashboard_core_tag">sing-box 1.12.19</string>
+    <string name="dashboard_core_tag">sing-box 1.14.0</string>
     <string name="dashboard_status_connected">已連接</string>
     <string name="dashboard_status_disconnected">未連接</string>
     <string name="dashboard_status_connecting">正在連接...</string>
