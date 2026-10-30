@@ -32,6 +32,8 @@ type LocalDNSTransport interface {
 
 var gLocalDNSTransport *platformLocalDNSTransport = nil
 
+var _ adapter.DNSTransport = (*platformLocalDNSTransport)(nil)
+
 type platformLocalDNSTransport struct {
 	dns.TransportAdapter
 	iif LocalDNSTransport
@@ -52,6 +54,15 @@ func (p *platformLocalDNSTransport) Start(stage adapter.StartStage) error {
 
 func (p *platformLocalDNSTransport) Close() error {
 	return nil
+}
+
+func (p *platformLocalDNSTransport) Reset() {
+}
+
+func (p *platformLocalDNSTransport) ExchangeAsync(ctx context.Context, message *mDNS.Msg, callback func(response *mDNS.Msg, err error)) {
+	go func() {
+		callback(p.Exchange(ctx, message))
+	}()
 }
 
 func (p *platformLocalDNSTransport) Exchange(ctx context.Context, message *mDNS.Msg) (*mDNS.Msg, error) {
