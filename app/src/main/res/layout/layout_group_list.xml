@@ -8,7 +8,7 @@
     android:orientation="vertical"
     tools:context=".ui.ConfigurationFragment">
 
-    <!-- Hidden toolbar kept for ToolbarFragment & menu inflation compatibility -->
+    <!-- Hidden toolbar kept for ToolbarFragment base class compatibility -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -170,28 +170,87 @@
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <TextView
+                <!-- Actions when Collapsed: Selector text + Down Arrow -->
+                <LinearLayout
+                    android:id="@+id/layout_selector_collapsed_actions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="10dp"
-                    android:text="Selector"
-                    android:textColor="@color/fl_text_secondary"
-                    android:textSize="12.5sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_fl_tonal_circle">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:text="Selector"
+                        android:textColor="@color/fl_text_secondary"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
 
-                    <ImageView
-                        android:id="@+id/iv_selector_arrow"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_gravity="center"
-                        app:srcCompat="@drawable/ic_fl_chevron_down"
+                    <FrameLayout
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_fl_tonal_circle">
+
+                        <ImageView
+                            android:id="@+id/iv_selector_arrow"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            app:srcCompat="@drawable/ic_fl_chevron_down"
+                            app:tint="@color/fl_text_primary" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- FlClash Actions when Expanded: [🎯 定位] [⚡ 全组测速] [▲ 收起] -->
+                <LinearLayout
+                    android:id="@+id/layout_selector_expanded_actions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <!-- Locate Current Node Button (🎯) -->
+                    <ImageButton
+                        android:id="@+id/btn_group_locate"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_fl_tonal_circle"
+                        android:contentDescription="定位当前节点"
+                        android:padding="7dp"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_fl_target"
                         app:tint="@color/fl_text_primary" />
-                </FrameLayout>
+
+                    <!-- Test Entire Group Button (⚡) -->
+                    <ImageButton
+                        android:id="@+id/btn_group_speedtest"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_fl_tonal_circle"
+                        android:contentDescription="测试整组节点延迟"
+                        android:padding="7dp"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_fl_lightning"
+                        app:tint="@color/theme_primary" />
+
+                    <!-- Collapse Group Button (▲) -->
+                    <ImageButton
+                        android:id="@+id/btn_group_collapse"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_fl_tonal_circle"
+                        android:contentDescription="收起"
+                        android:padding="7dp"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_fl_chevron_up"
+                        app:tint="@color/fl_text_primary" />
+
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -380,47 +439,133 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <!-- Quick Strategy Action Bar inside Expanded Group -->
+        <!-- Top Dual-Grid Virtual Cards: 自动选择 (URLTest) & 故障转移 (Fallback) (as seen in FlClash screenshot) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp">
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginBottom="4dp"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_expanded_group_hint"
+            <!-- 自动选择 Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/subcard_auto_urltest"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="4dp"
                 android:layout_weight="1"
-                android:text="节点列表"
-                android:textColor="@color/fl_text_secondary"
-                android:textSize="12.5sp"
-                android:textStyle="bold" />
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_quick_urltest"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:layout_marginEnd="8dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="12dp"
-                android:text="⚡ 一键测速"
-                android:textSize="11.5sp"
-                app:cornerRadius="17dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_collapse_nodes"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="12dp"
-                android:text="收起 ▲"
-                android:textSize="11.5sp"
-                app:cornerRadius="17dp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="自动选择"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="URLTest"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_grid_urltest_ping"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="42 ms"
+                            android:textColor="@color/fl_pill_fast_text"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 故障转移 Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/subcard_auto_fallback"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="4dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/fl_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/fl_card_stroke"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="故障转移"
+                        android:textColor="@color/fl_text_primary"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Fallback"
+                            android:textColor="@color/fl_text_secondary"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_grid_fallback_ping"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="952 ms"
+                            android:textColor="@color/fl_pill_medium_text"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 

@@ -17,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.PopupMenu
@@ -154,6 +155,53 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
     }
 
+    val testingNodeIds = java.util.concurrent.ConcurrentHashMap.newKeySet<Long>()
+
+    fun testSingleNode(profile: ProxyEntity, onComplete: () -> Unit) {
+        testingNodeIds.add(profile.id)
+        runOnDefaultDispatcher {
+            try {
+                val urlTest = UrlTest()
+                val result = urlTest.doTest(profile)
+                profile.status = 1
+                profile.ping = result
+                profile.error = null
+            } catch (e: Exception) {
+                try {
+                    var address = profile.requireBean().serverAddress
+                    if (!address.isIpAddress()) {
+                        SagerNet.underlyingNetwork?.getAllByName(address)?.firstOrNull()?.let {
+                            address = it.hostAddress
+                        }
+                    }
+                    val socket = SagerNet.underlyingNetwork?.socketFactory?.createSocket() ?: Socket()
+                    try {
+                        socket.soTimeout = 3000
+                        socket.bind(InetSocketAddress(0))
+                        val start = SystemClock.elapsedRealtime()
+                        socket.connect(InetSocketAddress(address, profile.requireBean().serverPort), 3000)
+                        profile.status = 1
+                        profile.ping = (SystemClock.elapsedRealtime() - start).toInt()
+                        profile.error = null
+                    } finally {
+                        socket.closeQuietly()
+                    }
+                } catch (e2: Exception) {
+                    profile.status = 3
+                    profile.error = "Timeout"
+                }
+            }
+            try {
+                ProfileManager.updateProfile(profile)
+            } catch (_: Exception) {}
+            testingNodeIds.remove(profile.id)
+            onMainDispatcher {
+                onComplete()
+                refreshStrategyAccordionHeader()
+            }
+        }
+    }
+
     private var expandedStrategyMode = 0 // 0 = all collapsed (FlClash screenshot 5), 1 = Selector, 2 = URLTest, 3 = Fallback
 
     fun withCountryFlag(name: String): String {
@@ -233,7 +281,9 @@ class ConfigurationFragment @JvmOverloads constructor(
         val arrowUrlTest = rootView.findViewById<ImageView>(R.id.iv_urltest_arrow)
         val arrowFallback = rootView.findViewById<ImageView>(R.id.iv_fallback_arrow)
         val expandedPanel = rootView.findViewById<View>(R.id.layout_expanded_proxies)
-        val expandedHint = rootView.findViewById<TextView>(R.id.tv_expanded_group_hint)
+
+        val collapsedActions = rootView.findViewById<View>(R.id.layout_selector_collapsed_actions)
+        val expandedActions = rootView.findViewById<View>(R.id.layout_selector_expanded_actions)
 
         val ctx = context ?: return
         val activeStroke = ContextCompat.getColor(ctx, R.color.fl_card_active_stroke)
@@ -247,6 +297,9 @@ class ConfigurationFragment @JvmOverloads constructor(
                 cardUrlTest?.isVisible = true
                 cardFallback?.isVisible = true
                 expandedPanel?.isVisible = false
+
+                collapsedActions?.isVisible = true
+                expandedActions?.isVisible = false
 
                 cardSelector?.strokeColor = normalStroke
                 cardSelector?.setCardBackgroundColor(normalBg)
@@ -264,7 +317,9 @@ class ConfigurationFragment @JvmOverloads constructor(
                 cardUrlTest?.isVisible = false
                 cardFallback?.isVisible = false
                 expandedPanel?.isVisible = true
-                expandedHint?.text = "Selector · 手动选择节点"
+
+                collapsedActions?.isVisible = false
+                expandedActions?.isVisible = true
 
                 cardSelector?.strokeColor = activeStroke
                 cardSelector?.setCardBackgroundColor(activeBg)
@@ -275,7 +330,6 @@ class ConfigurationFragment @JvmOverloads constructor(
                 cardUrlTest?.isVisible = true
                 cardFallback?.isVisible = false
                 expandedPanel?.isVisible = true
-                expandedHint?.text = "URLTest · 自动测速优选节点"
 
                 cardUrlTest?.strokeColor = activeStroke
                 cardUrlTest?.setCardBackgroundColor(activeBg)
@@ -286,7 +340,6 @@ class ConfigurationFragment @JvmOverloads constructor(
                 cardUrlTest?.isVisible = false
                 cardFallback?.isVisible = true
                 expandedPanel?.isVisible = true
-                expandedHint?.text = "Fallback · 故障转移节点列表"
 
                 cardFallback?.strokeColor = activeStroke
                 cardFallback?.setCardBackgroundColor(activeBg)
@@ -374,12 +427,63 @@ class ConfigurationFragment @JvmOverloads constructor(
             setStrategyAccordionExpanded(3)
         }
 
-        view.findViewById<View>(R.id.btn_collapse_nodes)?.setOnClickListener {
+        view.findViewById<View>(R.id.btn_group_locate)?.setOnClickListener {
+            val currentFrag = getCurrentGroupFragment()
+            if (currentFrag != null) {
+                val selectedId = selectedItem?.id ?: DataStore.selectedProxy
+                val selectedIndex = currentFrag.adapter?.configurationIdList?.indexOf(selectedId) ?: -1
+                if (selectedIndex != -1) {
+                    currentFrag.configurationListView.smoothScrollToPosition(selectedIndex)
+                    snackbar("已定位到当前节点").show()
+                } else {
+                    snackbar("当前未选中节点").show()
+                }
+            }
+        }
+
+        view.findViewById<View>(R.id.btn_group_speedtest)?.setOnClickListener {
+            urlTest()
+        }
+
+        view.findViewById<View>(R.id.btn_group_collapse)?.setOnClickListener {
             setStrategyAccordionExpanded(0)
         }
 
-        view.findViewById<View>(R.id.btn_quick_urltest)?.setOnClickListener {
-            urlTest()
+        view.findViewById<View>(R.id.subcard_auto_urltest)?.setOnClickListener {
+            val currentFrag = getCurrentGroupFragment()
+            val profiles = currentFrag?.adapter?.configurationList?.values ?: emptyList()
+            val best = profiles.filter { it.status == 1 && it.ping > 0 }.minByOrNull { it.ping }
+            if (best != null) {
+                val lastSelected = DataStore.selectedProxy
+                DataStore.selectedProxy = best.id
+                ProfileManager.postUpdate(lastSelected)
+                ProfileManager.postUpdate(best.id)
+                if (DataStore.serviceState.canStop) SagerNet.reloadService()
+                snackbar("已切换至最低延迟节点: ${best.displayName()} (${best.ping} ms)").show()
+                currentFrag?.adapter?.notifyDataSetChanged()
+                refreshStrategyAccordionHeader()
+            } else {
+                snackbar("正在测速优选最低延迟节点...").show()
+                urlTest()
+            }
+        }
+
+        view.findViewById<View>(R.id.subcard_auto_fallback)?.setOnClickListener {
+            val currentFrag = getCurrentGroupFragment()
+            val profiles = currentFrag?.adapter?.configurationList?.values ?: emptyList()
+            val fallback = profiles.filter { it.status == 1 }.getOrNull(1) ?: profiles.firstOrNull()
+            if (fallback != null) {
+                val lastSelected = DataStore.selectedProxy
+                DataStore.selectedProxy = fallback.id
+                ProfileManager.postUpdate(lastSelected)
+                ProfileManager.postUpdate(fallback.id)
+                if (DataStore.serviceState.canStop) SagerNet.reloadService()
+                snackbar("已启用故障转移节点: ${fallback.displayName()}").show()
+                currentFrag?.adapter?.notifyDataSetChanged()
+                refreshStrategyAccordionHeader()
+            } else {
+                urlTest()
+            }
         }
 
         if (select) {
@@ -1462,7 +1566,8 @@ class ConfigurationFragment @JvmOverloads constructor(
             if (!::proxyGroup.isInitialized) return
 
             configurationListView = view.findViewById(R.id.configuration_list)
-            layoutManager = FixedLinearLayoutManager(configurationListView)
+            val gridLayoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
+            layoutManager = gridLayoutManager
             configurationListView.layoutManager = layoutManager
             adapter = ConfigurationAdapter()
             ProfileManager.addListener(adapter!!)
@@ -1476,7 +1581,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                 undoManager = UndoSnackbarManager(activity as MainActivity, adapter!!)
 
                 ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-                    ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.START
+                    ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT,
+                    0
                 ) {
                     override fun getSwipeDirs(
                         recyclerView: RecyclerView,
@@ -1781,16 +1887,12 @@ class ConfigurationFragment @JvmOverloads constructor(
 
             val profileName: TextView = view.findViewById(R.id.profile_name)
             val profileType: TextView = view.findViewById(R.id.profile_type)
-            val profileAddress: TextView = view.findViewById(R.id.profile_address)
             val profileStatus: TextView = view.findViewById(R.id.profile_status)
+            val selectedView: View = view.findViewById(R.id.selected_view)
 
-            val trafficText: TextView = view.findViewById(R.id.traffic_text)
-            val selectedView: LinearLayout = view.findViewById(R.id.selected_view)
-            val editButton: ImageView = view.findViewById(R.id.edit)
-            val shareLayout: LinearLayout = view.findViewById(R.id.share)
-            val shareLayer: LinearLayout = view.findViewById(R.id.share_layer)
-            val shareButton: ImageView = view.findViewById(R.id.shareIcon)
-            val removeButton: ImageView = view.findViewById(R.id.remove)
+            val layoutNodePing: View = view.findViewById(R.id.layout_node_ping)
+            val pbNodePing: ProgressBar = view.findViewById(R.id.pb_node_ping)
+            val ivNodeLightning: ImageView = view.findViewById(R.id.iv_node_lightning)
 
             fun bind(proxyEntity: ProxyEntity, trafficData: TrafficData? = null) {
                 val pf = parentFragment as? ConfigurationFragment ?: return
@@ -1810,9 +1912,6 @@ class ConfigurationFragment @JvmOverloads constructor(
                                 update = DataStore.selectedProxy != proxyEntity.id
                                 lastSelected = DataStore.selectedProxy
                                 DataStore.selectedProxy = proxyEntity.id
-                                onMainDispatcher {
-                                    selectedView.visibility = View.VISIBLE
-                                }
                             }
 
                             if (update) {
@@ -1828,9 +1927,46 @@ class ConfigurationFragment @JvmOverloads constructor(
                                     SagerNet.startService()
                                 }
                             }
-                            pf.refreshStrategyAccordionHeader()
+                            onMainDispatcher {
+                                adapter?.notifyDataSetChanged()
+                                pf.refreshStrategyAccordionHeader()
+                            }
                         }
+                    }
 
+                    view.setOnLongClickListener { anchor ->
+                        val popup = PopupMenu(anchor.context, anchor)
+                        popup.menu.add(0, 101, 0, "编辑节点")
+                        if (proxyEntity.haveLink() || proxyEntity.haveStandardLink()) {
+                            popup.menu.add(0, 102, 1, "分享节点")
+                        }
+                        popup.menu.add(0, 103, 2, "删除节点")
+                        popup.setOnMenuItemClickListener { menuItem ->
+                            when (menuItem.itemId) {
+                                101 -> {
+                                    anchor.context.startActivity(
+                                        proxyEntity.settingIntent(
+                                            anchor.context, proxyGroup.type == GroupType.SUBSCRIPTION
+                                        )
+                                    )
+                                }
+                                102 -> {
+                                    showShareMenu(anchor, proxyEntity)
+                                }
+                                103 -> {
+                                    adapter?.let { ad ->
+                                        val index = ad.configurationIdList.indexOf(proxyEntity.id)
+                                        if (index >= 0) {
+                                            ad.remove(index)
+                                            undoManager.remove(index to proxyEntity)
+                                        }
+                                    }
+                                }
+                            }
+                            true
+                        }
+                        popup.show()
+                        true
                     }
                 }
 
@@ -1838,129 +1974,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                 profileType.text = proxyEntity.displayType()
                 profileType.setTextColor(requireContext().getProtocolColor(proxyEntity.type))
 
-                var rx = proxyEntity.rx
-                var tx = proxyEntity.tx
-                if (trafficData != null) {
-                    // use new data
-                    tx = trafficData.tx
-                    rx = trafficData.rx
-                }
-
-                val showTraffic = rx + tx != 0L
-                trafficText.isVisible = showTraffic
-                if (showTraffic) {
-                    trafficText.text = view.context.getString(
-                        R.string.traffic,
-                        Formatter.formatFileSize(view.context, tx),
-                        Formatter.formatFileSize(view.context, rx)
-                    )
-                }
-
-                var address = proxyEntity.displayAddress()
-                if (showTraffic && address.length >= 30) {
-                    address = address.substring(0, 27) + "..."
-                }
-
-                if (proxyEntity.requireBean().name.isBlank() || !pf.alwaysShowAddress) {
-                    address = ""
-                }
-
-                profileAddress.text = address
-                (trafficText.parent as View).isGone =
-                    (!showTraffic || proxyEntity.status <= 0) && address.isBlank()
-
-                // FlClash Latency Pill Badge
-                when (proxyEntity.status) {
-                    1 -> {
-                        val ping = proxyEntity.ping
-                        profileStatus.text = "$ping ms"
-                        if (ping in 1..300) {
-                            profileStatus.setBackgroundResource(R.drawable.bg_pill_fast)
-                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_fast_text))
-                        } else if (ping in 301..800) {
-                            profileStatus.setBackgroundResource(R.drawable.bg_pill_medium)
-                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_medium_text))
-                        } else {
-                            profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
-                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
-                        }
-                        profileStatus.setOnClickListener(null)
-                    }
-                    2 -> {
-                        profileStatus.text = proxyEntity.error ?: "Error"
-                        profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
-                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
-                        profileStatus.setOnClickListener(null)
-                    }
-                    3 -> {
-                        val err = proxyEntity.error ?: "Timeout"
-                        val msg = Protocols.genFriendlyMsg(err)
-                        profileStatus.text = if (msg != err) msg else "Timeout"
-                        profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
-                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
-                        profileStatus.setOnClickListener {
-                            alert(err).tryToShow()
-                        }
-                    }
-                    0 -> {
-                        profileStatus.text = "..."
-                        profileStatus.setBackgroundResource(R.drawable.bg_pill_neutral)
-                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_neutral_text))
-                        profileStatus.setOnClickListener(null)
-                    }
-                    else -> {
-                        if (proxyEntity.ping > 0) {
-                            val ping = proxyEntity.ping
-                            profileStatus.text = "$ping ms"
-                            if (ping <= 300) {
-                                profileStatus.setBackgroundResource(R.drawable.bg_pill_fast)
-                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_fast_text))
-                            } else if (ping <= 800) {
-                                profileStatus.setBackgroundResource(R.drawable.bg_pill_medium)
-                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_medium_text))
-                            } else {
-                                profileStatus.setBackgroundResource(R.drawable.bg_pill_slow)
-                                profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
-                            }
-                        } else {
-                            profileStatus.text = "-- ms"
-                            profileStatus.setBackgroundResource(R.drawable.bg_pill_neutral)
-                            profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_neutral_text))
-                        }
-                        profileStatus.setOnClickListener(null)
-                    }
-                }
-
-                editButton.setOnClickListener {
-                    it.context.startActivity(
-                        proxyEntity.settingIntent(
-                            it.context, proxyGroup.type == GroupType.SUBSCRIPTION
-                        )
-                    )
-                }
-
-                removeButton.setOnClickListener {
-                    adapter?.let {
-                        val index = it.configurationIdList.indexOf(proxyEntity.id)
-                        it.remove(index)
-                        undoManager.remove(index to proxyEntity)
-                    }
-                }
-
-                val selectOrChain = select || proxyEntity.type == ProxyEntity.TYPE_CHAIN
-                shareLayout.isGone = selectOrChain
-                editButton.isGone = select
-                removeButton.isGone = select
-
-                proxyEntity.nekoBean?.apply {
-                    shareLayout.isGone = true
-                }
-
                 val selected = (selectedItem?.id ?: DataStore.selectedProxy) == proxyEntity.id
-                val started =
-                    selected && DataStore.serviceState.started && DataStore.currentProfile == proxyEntity.id
-                editButton.isEnabled = !started
-                removeButton.isEnabled = !started
                 selectedView.isVisible = selected
 
                 // FlClash Active Card Highlighting
@@ -1977,39 +1991,73 @@ class ConfigurationFragment @JvmOverloads constructor(
                     }
                 }
 
-                if (!(select || proxyEntity.type == ProxyEntity.TYPE_CHAIN)) {
-                    shareLayer.setBackgroundColor(Color.TRANSPARENT)
-                    shareButton.setImageResource(R.drawable.ic_social_share)
-                    shareButton.setColorFilter(Color.GRAY)
-                    shareButton.isVisible = true
-
-                    shareLayout.setOnClickListener { anchor ->
-                        val popup = PopupMenu(requireContext(), anchor)
-                        popup.menuInflater.inflate(R.menu.profile_share_menu, popup.menu)
-
-                        when {
-                            !proxyEntity.haveStandardLink() -> {
-                                popup.menu.findItem(R.id.action_group_qr).subMenu?.removeItem(R.id.action_standard_qr)
-                                popup.menu.findItem(R.id.action_group_clipboard).subMenu?.removeItem(
-                                    R.id.action_standard_clipboard
-                                )
-                            }
-
-                            !proxyEntity.haveLink() -> {
-                                popup.menu.removeItem(R.id.action_group_qr)
-                                popup.menu.removeItem(R.id.action_group_clipboard)
-                            }
-                        }
-
-                        if (proxyEntity.nekoBean != null) {
-                            popup.menu.removeItem(R.id.action_group_configuration)
-                        }
-
-                        popup.setOnMenuItemClickListener(this@ConfigurationHolder)
-                        popup.show()
+                // Single Node Latency / Lightning Test Status
+                val isTesting = pf.testingNodeIds.contains(proxyEntity.id)
+                if (isTesting) {
+                    pbNodePing.isVisible = true
+                    ivNodeLightning.isGone = true
+                    profileStatus.isGone = true
+                } else if (proxyEntity.status == 1 && proxyEntity.ping > 0) {
+                    pbNodePing.isGone = true
+                    ivNodeLightning.isGone = true
+                    profileStatus.isVisible = true
+                    val ping = proxyEntity.ping
+                    profileStatus.text = "$ping ms"
+                    if (ping <= 300) {
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_fast_text))
+                    } else if (ping <= 800) {
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_medium_text))
+                    } else {
+                        profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
                     }
+                } else if (proxyEntity.status in 2..3) {
+                    pbNodePing.isGone = true
+                    ivNodeLightning.isGone = true
+                    profileStatus.isVisible = true
+                    profileStatus.text = "超时"
+                    profileStatus.setTextColor(ContextCompat.getColor(view.context, R.color.fl_pill_slow_text))
+                } else {
+                    pbNodePing.isGone = true
+                    profileStatus.isGone = true
+                    ivNodeLightning.isVisible = true
                 }
 
+                // Lightning test click triggers single node latency test
+                layoutNodePing.setOnClickListener {
+                    if (!pf.testingNodeIds.contains(proxyEntity.id)) {
+                        pbNodePing.isVisible = true
+                        ivNodeLightning.isGone = true
+                        profileStatus.isGone = true
+                        pf.testSingleNode(proxyEntity) {
+                            val pos = bindingAdapterPosition
+                            if (pos != RecyclerView.NO_POSITION) {
+                                adapter?.notifyItemChanged(pos)
+                            }
+                        }
+                    }
+                }
+            }
+
+            fun showShareMenu(anchor: View, proxyEntity: ProxyEntity) {
+                val popup = PopupMenu(anchor.context, anchor)
+                popup.menuInflater.inflate(R.menu.profile_share_menu, popup.menu)
+                when {
+                    !proxyEntity.haveStandardLink() -> {
+                        popup.menu.findItem(R.id.action_group_qr)?.subMenu?.removeItem(R.id.action_standard_qr)
+                        popup.menu.findItem(R.id.action_group_clipboard)?.subMenu?.removeItem(
+                            R.id.action_standard_clipboard
+                        )
+                    }
+                    !proxyEntity.haveLink() -> {
+                        popup.menu.removeItem(R.id.action_group_qr)
+                        popup.menu.removeItem(R.id.action_group_clipboard)
+                    }
+                }
+                if (proxyEntity.nekoBean != null) {
+                    popup.menu.removeItem(R.id.action_group_configuration)
+                }
+                popup.setOnMenuItemClickListener(this@ConfigurationHolder)
+                popup.show()
             }
 
             var currentName = ""
