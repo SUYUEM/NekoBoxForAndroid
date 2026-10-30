@@ -23,6 +23,14 @@ if [ -f "$BASEDIR/buildScript/lib/core/sing-box-x25519mlkem768.patch" ]; then
     echo "sing-box patch already applied or not applicable, skipping."
   fi
 fi
+if [ -f "$BASEDIR/buildScript/lib/core/sing-box-1.14-boxapi.patch" ]; then
+  if git apply --check "$BASEDIR/buildScript/lib/core/sing-box-1.14-boxapi.patch" 2>/dev/null; then
+    echo "Applying sing-box-1.14-boxapi.patch..."
+    git apply "$BASEDIR/buildScript/lib/core/sing-box-1.14-boxapi.patch"
+  else
+    echo "sing-box 1.14 boxapi patch already applied or not applicable, skipping."
+  fi
+fi
 popd
 
 ####
