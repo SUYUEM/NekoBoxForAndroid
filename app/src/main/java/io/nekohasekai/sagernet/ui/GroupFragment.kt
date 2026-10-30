@@ -67,7 +67,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             val items = arrayOf(
                 getString(R.string.group_create_subscription),
                 getString(R.string.group_create),
-                getString(R.string.action_import_clipboard)
+                getString(R.string.paste_from_clipboard)
             )
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.menu_group)
@@ -468,11 +468,11 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             val isActive = proxyGroup.id == DataStore.selectedGroup
             groupActiveBadge.isVisible = isActive
             if (isActive) {
-                contentCard.strokeWidth = dp2px(1.5f)
+                contentCard.strokeWidth = dp2px(2)
                 contentCard.strokeColor = ContextCompat.getColor(itemView.context, R.color.fl_card_active_stroke)
                 contentCard.setCardBackgroundColor(ContextCompat.getColor(itemView.context, R.color.fl_card_active_bg))
             } else {
-                contentCard.strokeWidth = dp2px(1f)
+                contentCard.strokeWidth = dp2px(1)
                 contentCard.strokeColor = ContextCompat.getColor(itemView.context, R.color.fl_card_stroke)
                 contentCard.setCardBackgroundColor(ContextCompat.getColor(itemView.context, R.color.fl_card_bg))
             }

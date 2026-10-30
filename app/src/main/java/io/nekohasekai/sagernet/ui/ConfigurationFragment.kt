@@ -1732,11 +1732,11 @@ class ConfigurationFragment @JvmOverloads constructor(
                 val card = view as? com.google.android.material.card.MaterialCardView
                 if (card != null) {
                     if (selected) {
-                        card.strokeWidth = dp2px(1.5f)
+                        card.strokeWidth = dp2px(2)
                         card.strokeColor = ContextCompat.getColor(view.context, R.color.fl_card_active_stroke)
                         card.setCardBackgroundColor(ContextCompat.getColor(view.context, R.color.fl_card_active_bg))
                     } else {
-                        card.strokeWidth = dp2px(1f)
+                        card.strokeWidth = dp2px(1)
                         card.strokeColor = ContextCompat.getColor(view.context, R.color.fl_card_stroke)
                         card.setCardBackgroundColor(ContextCompat.getColor(view.context, R.color.fl_card_bg))
                     }
