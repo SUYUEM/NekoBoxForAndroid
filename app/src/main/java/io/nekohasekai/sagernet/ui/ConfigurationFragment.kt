@@ -454,14 +454,18 @@ class ConfigurationFragment @JvmOverloads constructor(
             val profiles = currentFrag?.adapter?.configurationList?.values ?: emptyList()
             val best = profiles.filter { it.status == 1 && it.ping > 0 }.minByOrNull { it.ping }
             if (best != null) {
-                val lastSelected = DataStore.selectedProxy
-                DataStore.selectedProxy = best.id
-                ProfileManager.postUpdate(lastSelected)
-                ProfileManager.postUpdate(best.id)
-                if (DataStore.serviceState.canStop) SagerNet.reloadService()
-                snackbar("已切换至最低延迟节点: ${best.displayName()} (${best.ping} ms)").show()
-                currentFrag?.adapter?.notifyDataSetChanged()
-                refreshStrategyAccordionHeader()
+                runOnDefaultDispatcher {
+                    val lastSelected = DataStore.selectedProxy
+                    DataStore.selectedProxy = best.id
+                    ProfileManager.postUpdate(lastSelected)
+                    ProfileManager.postUpdate(best.id)
+                    if (DataStore.serviceState.canStop) SagerNet.reloadService()
+                    onMainDispatcher {
+                        snackbar("已切换至最低延迟节点: ${best.displayName()} (${best.ping} ms)").show()
+                        currentFrag?.adapter?.notifyDataSetChanged()
+                        refreshStrategyAccordionHeader()
+                    }
+                }
             } else {
                 snackbar("正在测速优选最低延迟节点...").show()
                 urlTest()
@@ -473,14 +477,18 @@ class ConfigurationFragment @JvmOverloads constructor(
             val profiles = currentFrag?.adapter?.configurationList?.values ?: emptyList()
             val fallback = profiles.filter { it.status == 1 }.getOrNull(1) ?: profiles.firstOrNull()
             if (fallback != null) {
-                val lastSelected = DataStore.selectedProxy
-                DataStore.selectedProxy = fallback.id
-                ProfileManager.postUpdate(lastSelected)
-                ProfileManager.postUpdate(fallback.id)
-                if (DataStore.serviceState.canStop) SagerNet.reloadService()
-                snackbar("已启用故障转移节点: ${fallback.displayName()}").show()
-                currentFrag?.adapter?.notifyDataSetChanged()
-                refreshStrategyAccordionHeader()
+                runOnDefaultDispatcher {
+                    val lastSelected = DataStore.selectedProxy
+                    DataStore.selectedProxy = fallback.id
+                    ProfileManager.postUpdate(lastSelected)
+                    ProfileManager.postUpdate(fallback.id)
+                    if (DataStore.serviceState.canStop) SagerNet.reloadService()
+                    onMainDispatcher {
+                        snackbar("已启用故障转移节点: ${fallback.displayName()}").show()
+                        currentFrag?.adapter?.notifyDataSetChanged()
+                        refreshStrategyAccordionHeader()
+                    }
+                }
             } else {
                 urlTest()
             }
