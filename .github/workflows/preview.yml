@@ -51,6 +51,11 @@ jobs:
           path: app/libs
       - name: Verify Libcore
         run: ls -la app/libs
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - name: Gradle cache
         uses: actions/cache@v4
         with:
