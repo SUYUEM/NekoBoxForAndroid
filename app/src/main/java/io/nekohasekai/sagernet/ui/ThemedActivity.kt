@@ -14,6 +14,7 @@ import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.utils.Theme
+import io.nekohasekai.sagernet.widget.applyStatusBarTopPadding
 
 abstract class ThemedActivity : AppCompatActivity {
     constructor() : super()
@@ -40,12 +41,8 @@ abstract class ThemedActivity : AppCompatActivity {
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
         val appbar = findViewById<AppBarLayout>(R.id.appbar)
-        if (appbar != null && !appbar.fitsSystemWindows) {
-            ViewCompat.setOnApplyWindowInsetsListener(appbar) { view, insets ->
-                val top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
-                view.updatePadding(top = top)
-                insets
-            }
+        if (appbar != null) {
+            appbar.applyStatusBarTopPadding(0)
         }
     }
 

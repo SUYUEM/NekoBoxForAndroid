@@ -16,12 +16,13 @@
 
     <!-- FlClash Top Header: Large Title + Circular Edit Button -->
     <LinearLayout
+        android:id="@+id/header_dashboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="18dp"
-        android:paddingTop="14dp"
+        android:paddingTop="10dp"
         android:paddingBottom="10dp">
 
         <TextView

@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.widget.applyStatusBarTopPadding
 
 open class ToolbarFragment : Fragment {
 
@@ -17,6 +18,18 @@ open class ToolbarFragment : Fragment {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val flHeader = view.findViewById<View>(R.id.header_dashboard)
+            ?: view.findViewById<View>(R.id.header_proxies)
+            ?: view.findViewById<View>(R.id.header_profiles)
+            ?: view.findViewById<View>(R.id.header_tools)
+        flHeader?.applyStatusBarTopPadding(10)
+
+        val appbar = view.findViewById<View>(R.id.appbar)
+        if (appbar != null && flHeader == null) {
+            appbar.applyStatusBarTopPadding(0)
+        }
+
         toolbar = view.findViewById(R.id.toolbar)
         val isSubTool = this is RouteFragment || this is SettingsFragment ||
                 this is LogcatFragment || this is WebviewFragment || this is AboutFragment

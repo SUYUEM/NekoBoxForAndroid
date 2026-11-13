@@ -12,12 +12,15 @@ import android.graphics.Typeface
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.annotation.IdRes
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.preference.PreferenceDataStore
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
@@ -45,6 +48,7 @@ import io.nekohasekai.sagernet.fmt.PluginEntry
 import io.nekohasekai.sagernet.group.GroupInterfaceAdapter
 import io.nekohasekai.sagernet.group.GroupUpdater
 import io.nekohasekai.sagernet.ktx.alert
+import io.nekohasekai.sagernet.ktx.dp2px
 import io.nekohasekai.sagernet.ktx.isPlay
 import io.nekohasekai.sagernet.ktx.launchCustomTab
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
@@ -53,6 +57,7 @@ import io.nekohasekai.sagernet.ktx.parseSubscriptionUrl
 import io.nekohasekai.sagernet.ktx.SubscriptionInfo
 import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.widget.getNavigationBarHeight
 import moe.matsuri.nb4a.utils.Util
 
 class MainActivity : ThemedActivity(),
@@ -80,6 +85,25 @@ class MainActivity : ThemedActivity(),
         binding.tabConfiguration.setOnClickListener { displayFragmentWithId(R.id.nav_configuration) }
         binding.tabGroup.setOnClickListener { displayFragmentWithId(R.id.nav_group) }
         binding.tabTools.setOnClickListener { displayFragmentWithId(R.id.nav_tools) }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavCard) { card, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+            val bottomInset = maxOf(navBars.bottom, cutout.bottom)
+            (card.layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                bottomMargin = dp2px(14) + bottomInset
+                card.layoutParams = this
+            }
+            insets
+        }
+        val navBarFallback = getNavigationBarHeight()
+        if (navBarFallback > 0) {
+            (binding.bottomNavCard.layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                bottomMargin = dp2px(14) + navBarFallback
+                binding.bottomNavCard.layoutParams = this
+            }
+        }
+        ViewCompat.requestApplyInsets(binding.bottomNavCard)
 
         if (savedInstanceState == null) {
             displayFragmentWithId(R.id.nav_dashboard)
