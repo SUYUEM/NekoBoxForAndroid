@@ -19,6 +19,7 @@
 
         <!-- FlClash 配置 Top Header: Large Title + Pill (Refresh & Sort) + Circle (+) -->
         <LinearLayout
+            android:id="@+id/header_profiles"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"

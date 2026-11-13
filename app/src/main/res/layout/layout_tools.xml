@@ -17,6 +17,7 @@
 
     <!-- FlClash 工具 Top Header -->
     <LinearLayout
+        android:id="@+id/header_tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
